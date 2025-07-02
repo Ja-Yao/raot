@@ -4,15 +4,22 @@ import type { ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, Layer, NavigationControl, Source } from 'react-map-gl/mapbox';
 import { getTimes } from 'suncalc';
 
+import { toast } from 'sonner';
 import type {
   LineStringCollection,
+  MBTAData,
+  MBTASSEEventData,
+  MBTASSERemoveEvent,
+  MBTASSEUpdateEvent,
   PointCollection,
   Route,
   Shape,
-  Trip
+  Trip,
+  WorkerMessageFromWorker,
 } from 'types';
 import { getRoutes } from '../api/all-routes';
-import { shapesToFeatureCollection } from '../helpers/conversions';
+import { shapesToFeatureCollection, streamingEventToPoint } from '../helpers/conversions';
+import MBTASSEWorker from '../workers/mbta-worker?worker';
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
 const MBTA_KEY = import.meta.env.VITE_MBTA_KEY;
@@ -95,6 +102,109 @@ function MBTAMap({ setRoutes }: Props) {
       }
     };
     fetchRoutes();
+  }, []);
+
+  // Use useRef to store the worker instance so it persists across renders
+  const workerRef = useRef<Worker | null>(null);
+  useEffect(() => {
+    const setupWorker = () => {
+      workerRef.current = new MBTASSEWorker();
+      console.debug('Main thread: Web Worker initialized.');
+
+      workerRef.current.onmessage = (event: MessageEvent<WorkerMessageFromWorker>) => {
+        const { type, payload } = event.data;
+
+        switch (type) {
+          case 'status':
+            setConnectionStatus(payload as StreamStatus); // Type assertion for simple string status
+            break;
+          case 'data':
+            const { eventType, data: eventData } = payload;
+            // Apply the updates to the main thread's state
+            switch (eventType) {
+              case 'reset':
+                // convert event data to feature collection & cast eventData as MBTASSEEEventData[]
+                const vehicleData = eventData as MBTASSEEventData[];
+                setVehicleData({
+                  type: 'FeatureCollection',
+                  features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle)),
+                });
+                break;
+              case 'add':
+                const addedItem = eventData as MBTAData;
+                setVehicleData((prevData) => {
+                  const newFeatures = [...prevData.features, addedItem];
+                  return { ...prevData, features: newFeatures } as PointCollection;
+                });
+                break;
+              case 'update':
+                const updatedItem = streamingEventToPoint(eventData as MBTASSEUpdateEvent['data']);
+                setVehicleData((prevData) => {
+                  const newFeatures = prevData.features.map((feature) =>
+                    feature.id === updatedItem.id ? updatedItem : feature
+                  );
+                  return { ...prevData, features: newFeatures };
+                });
+                break;
+              case 'remove':
+                const removedItem = eventData as MBTASSERemoveEvent['data'];
+                setVehicleData((prevData) => {
+                  const newFeatures = prevData.features.filter((feature) => feature.id !== removedItem.id);
+                  return { ...prevData, features: newFeatures };
+                });
+                break;
+              default:
+                console.warn('Main thread: Unknown MBTA event type from worker:', eventType);
+                break;
+            }
+            break;
+          case 'error':
+            console.error('Main thread: Caught error from worker:', event);
+            toast.error("Got an error message. If icons aren't showing, refresh the page", {
+              description: new Date().toLocaleDateString(undefined, {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZoneName: 'short',
+              }),
+            });
+            break;
+          default:
+            console.warn('Main thread: Unknown message type from worker:', type);
+            toast.warning('Got a strange message from the MBTA', {
+              description: new Date().toLocaleDateString(undefined, {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                timeZoneName: 'short',
+              }),
+            });
+            break;
+        }
+      };
+
+      const filterParams = new URLSearchParams();
+
+      filterParams.append('filter[route_type]', routeTypes);
+
+      workerRef.current.postMessage({
+        type: 'start',
+        payload: { apiKey: MBTA_KEY, endpoint: 'vehicles', filterParams: filterParams.toString() },
+      });
+    };
+    setupWorker();
+
+    // Cleanup function: Send 'stop' message to worker and terminate it
+    return () => {
+      if (workerRef.current) {
+        console.debug('Main thread: Sending stop message to worker and terminating.');
+        workerRef.current.postMessage({ type: 'stop' });
+        workerRef.current.terminate(); // Important: terminate the worker when component unmounts
+        workerRef.current = null;
+      }
+    };
   }, []);
 
   return (
