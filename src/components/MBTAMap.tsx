@@ -293,7 +293,7 @@ function MBTAMap({ setRoutes }: Props) {
               paint={{
                 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 40, 8],
                 'line-color': ['case', ['has', 'color'], ['get', 'color'], 'transparent'],
-                'line-emissive-strength': 1,
+                'line-emissive-strength': 0.75,
               }}
               minzoom={10}
             />
@@ -311,25 +311,6 @@ function MBTAMap({ setRoutes }: Props) {
                   'icon-rotate': ['get', 'bearing'],
                 }}
                 paint={{
-                  // 'icon-color': [
-                  //   'match',
-                  //   ['get', 'route'],
-                  //   'Red',
-                  //   '#da291c',
-                  //   'Orange',
-                  //   '#ed8b00',
-                  //   'Blue',
-                  //   '#003da5',
-                  //   'Green-B',
-                  //   '#00843d',
-                  //   'Green-C',
-                  //   '#00843d',
-                  //   'Green-D',
-                  //   '#00843d',
-                  //   'Green-E',
-                  //   '#00843d',
-                  //   '#FFC72C',
-                  // ],
                   'icon-emissive-strength': 1,
                 }}
                 minzoom={10}
