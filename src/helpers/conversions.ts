@@ -48,6 +48,7 @@ export const shapesToFeatureCollection = (shapes: Shape[]): LineStringCollection
         label: data.attributes.label,
         route: data.relationships.route.data.id,
         speed: data.attributes.speed,
+        position: coordinates // used for hover popup
       },
     };
   };

@@ -1,7 +1,7 @@
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useEffect, useRef, useState } from 'react';
-import type { ViewState } from 'react-map-gl/mapbox';
-import Map, { GeolocateControl, Layer, NavigationControl, Source } from 'react-map-gl/mapbox';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
+import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from 'react-map-gl/mapbox';
 import { getTimes } from 'suncalc';
 
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ import type {
 import { getRoutes } from '../api/all-routes';
 import { shapesToFeatureCollection, streamingEventToPoint } from '../helpers/conversions';
 import MBTASSEWorker from '../workers/mbta-worker?worker';
+import type { GeoJsonProperties } from 'geojson';
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
 const MBTA_KEY = import.meta.env.VITE_MBTA_KEY;
@@ -54,8 +55,25 @@ function MBTAMap({ setRoutes }: Props) {
   });
   const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
   const [connectionStatus, setConnectionStatus] = useState<StreamStatus>('closed');
-  const [hoverInfo, setHoverInfo] = useState()
+  const [hoveredFeatureId, setHoveredFeatureId] = useState<string|null>(null);
+  const [hoverInfo, setHoverInfo] = useState<GeoJsonProperties>(null)
   const mapRef = useRef(null);
+  
+  const handleHover = useCallback(
+    (event: MapMouseEvent) => {
+      const feature = event.features && event.features[0];
+      if (feature) {
+        if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
+          setHoveredFeatureId(feature.properties!.label);
+
+          let position = feature.properties!.position;
+          position = position.substring(1, position.length - 1).split(',').map(Number) as [number, number]
+          setHoverInfo({ ...feature.properties, position: position});
+        }
+      }
+    },
+    [hoveredFeatureId, hoverInfo]
+  );
 
   // Fetch routes and shapes when the component mounts
   useEffect(() => {
@@ -214,6 +232,7 @@ function MBTAMap({ setRoutes }: Props) {
       mapStyle='mapbox://styles/mapbox/standard'
       initialViewState={viewState}
       projection='globe'
+      interactiveLayerIds={['streaming-layer']}
       onMove={(e) => setViewState(e.viewState)}
       onRender={(e) => {
         e.target.resize();
@@ -262,10 +281,11 @@ function MBTAMap({ setRoutes }: Props) {
       onLoad={(e) => {
         e.target.loadImage('src/assets/navigation-arrow.png', (error, image) => {
           if (error) throw error;
-          e.target.addImage('nav-arrow', image as HTMLImageElement);
+          e.target.addImage('nav-arrow', image as HTMLImageElement, { sdf: true });
         });
         setIsLoaded(true);
       }}
+      onMouseEnter={handleHover}
     >
       <NavigationControl position='bottom-right' style={{ borderRadius: '8px' }} />
       <GeolocateControl
@@ -302,20 +322,54 @@ function MBTAMap({ setRoutes }: Props) {
             <Source id='streaming-source' type='geojson' data={vehicleData}>
               <Layer
                 id='streaming-layer'
-                type='symbol'
+                type='circle'
                 source='streaming-source'
-                layout={{
-                  'icon-image': 'nav-arrow',
-                  'icon-allow-overlap': true,
-                  'icon-size': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 1.25],
-                  'icon-rotate': ['get', 'bearing'],
-                }}
+                layout={{}}
                 paint={{
-                  'icon-emissive-strength': 1,
+                  'circle-color': [
+                    'match',
+                    ['get', 'route'],
+                    'Red',
+                    '#da291c',
+                    'Orange',
+                    '#ed8b00',
+                    'Blue',
+                    '#003da5',
+                    'Green-B',
+                    '#00843d',
+                    'Green-C',
+                    '#00843d',
+                    'Green-D',
+                    '#00843d',
+                    'Green-E',
+                    '#00843d',
+                    '#FFC72C',
+                  ],
+                  'circle-stroke-color': 'white',
+                  'circle-stroke-width': 2,
+                  'circle-radius': ['case', ['boolean', ['feature-state', 'hover'], 'false'], 20, 10],
+                  'circle-radius-transition': {
+                    duration: 500,
+                    delay: 0,
+                  },
+                  'circle-emissive-strength': 1,
                 }}
                 minzoom={10}
               />
             </Source>
+          )}
+          {hoverInfo && (
+            <Popup
+              anchor='top'
+              longitude={hoverInfo.position[0]}
+              latitude={hoverInfo.position[1]}
+              onClose={(e) => {
+                setHoverInfo(null);
+                setHoveredFeatureId(null)
+              }}
+            >
+              hello world!
+            </Popup>
           )}
         </>
       )}
