@@ -2,7 +2,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, useState } from 'react';
 import type { Route } from 'types';
 import './App.css';
-import MBTAMap from './components/MBTAMap';
+import Map from './components/Map';
 import { Skeleton, Toaster } from './components/ui';
 import ThemeToggle from './components/ThemeToggle';
 
@@ -16,7 +16,7 @@ function App() {
       <Toaster closeButton richColors position='bottom-left' />
       <ThemeToggle className='absolute top-2 right-2 z-1' />
       <Suspense fallback={<Skeleton />}>
-        <MBTAMap setRoutes={setRoutes} />
+        <Map setRoutes={setRoutes} />
       </Suspense>
     </div>
   );
