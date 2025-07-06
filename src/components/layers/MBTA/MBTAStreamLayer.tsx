@@ -4,6 +4,8 @@ import { Layer, Source } from 'react-map-gl/mapbox';
 import type { PointCollection } from 'types';
 
 import { MBTA_KEY, ROUTE_TYPES } from '@/api/common';
+import { streamingEventToPoint } from '@/helpers/conversions';
+import MBTASSEWorker from '@/workers/mbta-worker?worker';
 import { proxy, wrap, type Remote } from 'comlink';
 import { toast } from 'sonner';
 import type {
@@ -15,10 +17,12 @@ import type {
   StreamStatus,
   WorkerMessageFromWorker
 } from 'types';
-import { streamingEventToPoint } from '@/helpers/conversions';
-import MBTASSEWorker from '@/workers/mbta-worker?worker';
 
-function MBTAStreamLayer() {
+interface Props {
+  visible: boolean;
+}
+
+function MBTAStreamLayer({ visible }: Props) {
   const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
   const [connectionStatus, setConnectionStatus] = useState<StreamStatus>('closed');
 
@@ -43,6 +47,7 @@ function MBTAStreamLayer() {
             const { eventType, data: eventData } = payload;
             switch (eventType) {
               case 'reset':
+                // contains the full current state of the endpoint. This is always the first event in the SSE stream.
                 const vehicleData = eventData as MBTASSEEventData[];
                 setVehicleData({
                   type: 'FeatureCollection',
@@ -50,6 +55,7 @@ function MBTAStreamLayer() {
                 });
                 break;
               case 'add':
+                // contains data for a new vehicle added to the stream
                 const addedItem = eventData as MBTAData;
                 setVehicleData((prevData) => {
                   const newFeatures = [...prevData.features, addedItem];
@@ -57,6 +63,7 @@ function MBTAStreamLayer() {
                 });
                 break;
               case 'update':
+                // contains data for an existing vehicle updated in the stream
                 const updatedItem = streamingEventToPoint(eventData as MBTASSEUpdateEvent['data']);
                 setVehicleData((prevData) => {
                   const newFeatures = prevData.features.map((feature) =>
@@ -66,6 +73,7 @@ function MBTAStreamLayer() {
                 });
                 break;
               case 'remove':
+                // contains data for a vehicle removed from the stream
                 const removedItem = eventData as MBTASSERemoveEvent['data'];
                 setVehicleData((prevData) => {
                   const newFeatures = prevData.features.filter((feature) => feature.id !== removedItem.id);
@@ -115,7 +123,11 @@ function MBTAStreamLayer() {
         );
       }
     };
-    setupWorker();
+    if (visible) {
+      setupWorker();
+    } else {
+      setVehicleData({ type: 'FeatureCollection', features: [] });
+    }
 
     // Cleanup function: Send 'stop' message to worker and terminate it
     return () => {
@@ -127,13 +139,16 @@ function MBTAStreamLayer() {
         // If you want to explicitly terminate the underlying worker:
         // (workerRef.current as any)[Comlink.releaseProxy](); // This releases the proxy and potentially the worker
         workerRef.current = null;
+        toast.warning(`Disconnected from the MBTA API`, {
+          description: 'Pan the map back over the Boston area to refresh the data.',
+        });
       }
     };
-  }, []);
+  }, [visible]);
 
   useEffect(() => {
     if (connectionStatus === 'open') {
-      toast.success(`MBTA SSE status: ${connectionStatus}`);
+      toast.success(`Connected to the MBTA API`);
     }
   }, [connectionStatus]);
 

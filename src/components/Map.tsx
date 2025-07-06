@@ -29,14 +29,16 @@ function MBTAMap({ shapes }: Props) {
   });
   const [clickedFeatureId, setClickedFeatureId] = useState<string>('');
   const [clickInfo, setClickInfo] = useState<GeoJsonProperties>(null);
+  const [isMBTAVisible, setIsMBTAVisible] = useState(false);
   const mapRef = useRef(null);
 
-  const findStop = async (id: string) => {
-    const stop = await getStop(id);
-    return stop;
-  };
+  const handleIconClick = useCallback(
+    async (event: MapMouseEvent) => {
+      const findStop = async (id: string) => {
+        const stop = await getStop(id);
+        return stop;
+      };
 
-  const handleIconClick = useCallback(async (event: MapMouseEvent) => {
       const feature = event.features && event.features[0];
       if (feature) {
         if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
@@ -56,7 +58,7 @@ function MBTAMap({ shapes }: Props) {
           } else if (vehicleStatus === 'IN_TRANSIT_TO') {
             currentStatus = 'In transit to';
           } else if (vehicleStatus === 'INCOMING_AT') {
-            currentStatus = 'Arriving at'
+            currentStatus = 'Arriving at';
           }
           setClickInfo({
             ...feature.properties,
@@ -135,8 +137,8 @@ function MBTAMap({ shapes }: Props) {
       <FullscreenControl position='top-right' style={{ borderRadius: '8px' }} />
       {isLoaded && (
         <>
-          <MBTARouteLayer shapes={shapes} />
-          <MBTAStreamLayer />
+          <MBTARouteLayer shapes={shapes} setIsMBTAVisible={setIsMBTAVisible} />
+          <MBTAStreamLayer visible={isMBTAVisible} />
           {clickInfo && (
             <Popup
               longitude={clickInfo.position[0]}
@@ -152,9 +154,9 @@ function MBTAMap({ shapes }: Props) {
                 className='flex flex-col pb-4 min-w-30'
               >
                 <h4 id='vehicle-route' className='font-bold text-xl'>
-                  {clickInfo.route}
+                  <>{/^\d+$/.test(clickInfo.route) ? `${clickInfo.route} Bus` : clickInfo.route}</>
                 </h4>
-                <Separator className='mt-1'/>
+                <Separator className='mt-1' />
                 <div id='vehicle-data-content' className='mt-4 rid grid-rows-4 gap-1'>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>Direction:</span>
