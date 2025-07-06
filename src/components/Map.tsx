@@ -4,7 +4,8 @@ import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from 'react-map-gl/mapbox';
 import { getTimes } from 'suncalc';
 
-import * as Comlink from 'comlink';
+import type { Remote } from 'comlink';
+import { proxy, wrap } from 'comlink';
 import type { GeoJsonProperties } from 'geojson';
 import { toast } from 'sonner';
 import type {
@@ -119,12 +120,12 @@ function MBTAMap() {
   }, []);
 
   // Use useRef to store the worker instance so it persists across renders
-  const workerRef = useRef<Comlink.Remote<MBTAWorkerAPI>>(null);
+  const workerRef = useRef<Remote<MBTAWorkerAPI>>(null);
   useEffect(() => {
     const setupWorker = async () => {
       // Wrap the worker with Comlink
       const workerInstance = new MBTASSEWorker();
-      workerRef.current = Comlink.wrap<MBTAWorkerAPI>(workerInstance);
+      workerRef.current = wrap<MBTAWorkerAPI>(workerInstance);
       console.debug('Main thread: Web Worker initialized with Comlink.');
 
       // Define the callback function to handle messages from the worker
@@ -207,7 +208,7 @@ function MBTAMap() {
       if (workerRef.current) {
         await workerRef.current.startStreaming(
           { apiKey: MBTA_KEY, endpoint: 'vehicles', filterParams: filterParams.toString() },
-          Comlink.proxy(handleWorkerMessage) // Use Comlink.proxy to pass the callback
+          proxy(handleWorkerMessage) // Use Comlink.proxy to pass the callback
         );
       }
     };
