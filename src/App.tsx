@@ -8,6 +8,7 @@ import Map from './components/Map';
 import { Toaster } from './components/ui';
 import { shapesToFeatureCollection } from './helpers/conversions';
 import { MBTA_KEY, ROUTE_TYPES } from './api/common';
+import { useTheme } from './providers/theme-provider';
 
 const Fallback = () => {
   return (
@@ -20,6 +21,7 @@ const Fallback = () => {
 };
 
 function App() {
+  const { theme } = useTheme();
   const [MBTAShapes, setMBTAShapes] = useState<LineStringCollection>({
     type: 'FeatureCollection',
     features: [],
@@ -68,7 +70,7 @@ function App() {
 
   return (
     <div id='main-container' className='h-full w-full overflow-clip'>
-      <Toaster closeButton richColors position='bottom-center' />
+      <Toaster closeButton richColors theme={theme} position='top-center' duration={2500} />
       <Suspense fallback={<Fallback />}>
         <Map shapes={MBTAShapes} />
       </Suspense>

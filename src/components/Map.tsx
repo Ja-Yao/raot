@@ -1,29 +1,16 @@
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
-import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from 'react-map-gl/mapbox';
+import Map, { FullscreenControl, GeolocateControl, NavigationControl, Popup } from 'react-map-gl/mapbox';
 import ThemeToggle from './ThemeToggle';
 
-import { MBTA_KEY, ROUTE_TYPES } from '@/api/common';
-import { useTheme } from '@/providers/theme-provider';
-import { proxy, wrap, type Remote } from 'comlink';
-import type { GeoJsonProperties } from 'geojson';
-import { toast } from 'sonner';
-import type {
-  LineStringCollection,
-  MBTAData,
-  MBTASSEEventData,
-  MBTASSERemoveEvent,
-  MBTASSEUpdateEvent,
-  MBTAWorkerAPI,
-  PointCollection,
-  StreamStatus,
-  WorkerMessageFromWorker
-} from 'types';
-import { streamingEventToPoint } from '../helpers/conversions';
-import MBTASSEWorker from '../workers/mbta-worker?worker';
-import { Separator } from './ui/separator';
 import { getStop } from '@/api/stops';
+import { useTheme } from '@/providers/theme-provider';
+import type { GeoJsonProperties } from 'geojson';
+import type { LineStringCollection } from 'types';
+import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
+import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
+import { Separator } from './ui/separator';
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
 
@@ -40,8 +27,6 @@ function MBTAMap({ shapes }: Props) {
     latitude: 42.3555,
     zoom: 15,
   });
-  const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
-  const [connectionStatus, setConnectionStatus] = useState<StreamStatus>('closed');
   const [clickedFeatureId, setClickedFeatureId] = useState<string>('');
   const [clickInfo, setClickInfo] = useState<GeoJsonProperties>(null);
   const mapRef = useRef(null);
@@ -84,115 +69,6 @@ function MBTAMap({ shapes }: Props) {
     },
     [clickedFeatureId, clickInfo]
   );
-
-  // Use useRef to store the worker instance so it persists across renders
-  const workerRef = useRef<Remote<MBTAWorkerAPI>>(null);
-  useEffect(() => {
-    const setupWorker = async () => {
-      // Wrap the worker with Comlink
-      const workerInstance = new MBTASSEWorker();
-      workerRef.current = wrap<MBTAWorkerAPI>(workerInstance);
-      console.debug('Main thread: Web Worker initialized with Comlink.');
-
-      // Define the callback function to handle messages from the worker
-      const handleWorkerMessage = (message: WorkerMessageFromWorker) => {
-        const { type, payload } = message;
-
-        switch (type) {
-          case 'status':
-            setConnectionStatus(payload as StreamStatus);
-            break;
-          case 'data':
-            const { eventType, data: eventData } = payload;
-            switch (eventType) {
-              case 'reset':
-                const vehicleData = eventData as MBTASSEEventData[];
-                setVehicleData({
-                  type: 'FeatureCollection',
-                  features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle)),
-                });
-                break;
-              case 'add':
-                const addedItem = eventData as MBTAData;
-                setVehicleData((prevData) => {
-                  const newFeatures = [...prevData.features, addedItem];
-                  return { ...prevData, features: newFeatures } as PointCollection;
-                });
-                break;
-              case 'update':
-                const updatedItem = streamingEventToPoint(eventData as MBTASSEUpdateEvent['data']);
-                setVehicleData((prevData) => {
-                  const newFeatures = prevData.features.map((feature) =>
-                    feature.id === updatedItem.id ? updatedItem : feature
-                  );
-                  return { ...prevData, features: newFeatures };
-                });
-                break;
-              case 'remove':
-                const removedItem = eventData as MBTASSERemoveEvent['data'];
-                setVehicleData((prevData) => {
-                  const newFeatures = prevData.features.filter((feature) => feature.id !== removedItem.id);
-                  return { ...prevData, features: newFeatures };
-                });
-                break;
-              default:
-                console.warn('Main thread: Unknown MBTA event type from worker:', eventType);
-                break;
-            }
-            break;
-          case 'error':
-            console.error('Main thread: Caught error from worker:', message);
-            toast.error("Got an error message. If icons aren't showing, refresh the page", {
-              description: new Date().toLocaleDateString(undefined, {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZoneName: 'short',
-              }),
-            });
-            break;
-          default:
-            console.warn('Main thread: Unknown message type from worker:', type);
-            toast.warning('Got a strange message from the MBTA', {
-              description: new Date().toLocaleDateString(undefined, {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZoneName: 'short',
-              }),
-            });
-            break;
-        }
-      };
-
-      const filterParams = new URLSearchParams();
-      filterParams.append('filter[route_type]', ROUTE_TYPES);
-
-      // Call the exposed worker function directly
-      if (workerRef.current) {
-        await workerRef.current.startStreaming(
-          { apiKey: MBTA_KEY, endpoint: 'vehicles', filterParams: filterParams.toString() },
-          proxy(handleWorkerMessage) // Use Comlink.proxy to pass the callback
-        );
-      }
-    };
-    setupWorker();
-
-    // Cleanup function: Send 'stop' message to worker and terminate it
-    return () => {
-      if (workerRef.current) {
-        console.debug('Main thread: Sending stop message to worker and terminating.');
-        workerRef.current.stopStreaming(); // Call the exposed stop function
-        // Comlink handles the termination of the underlying worker instance when the proxy is no longer referenced.
-        // However, explicitly terminating the worker can be done if needed, but Comlink usually manages the lifecycle.
-        // If you want to explicitly terminate the underlying worker:
-        // (workerRef.current as any)[Comlink.releaseProxy](); // This releases the proxy and potentially the worker
-        workerRef.current = null;
-      }
-    };
-  }, []);
 
   return (
     <Map
@@ -240,7 +116,7 @@ function MBTAMap({ shapes }: Props) {
       }}
       onClick={handleIconClick}
     >
-      <ThemeToggle className='absolute top-2 right-2 z-1' />
+      <ThemeToggle className='absolute bottom-10 left-2 z-1' />
       <NavigationControl position='bottom-right' style={{ borderRadius: '8px' }} />
       <GeolocateControl
         positionOptions={{ enableHighAccuracy: true }}
@@ -256,62 +132,11 @@ function MBTAMap({ shapes }: Props) {
           });
         }}
       />
+      <FullscreenControl position='top-right' style={{ borderRadius: '8px' }} />
       {isLoaded && (
         <>
-          <Source id='shape-source' type='geojson' data={shapes}>
-            <Layer
-              id='shape-layer'
-              type='line'
-              source='shape-source'
-              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              paint={{
-                'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 40, 8],
-                'line-color': ['case', ['has', 'color'], ['get', 'color'], 'transparent'],
-                'line-emissive-strength': 0.75,
-              }}
-              minzoom={10}
-            />
-          </Source>
-          {connectionStatus === 'open' && (
-            <Source id='streaming-source' type='geojson' data={vehicleData}>
-              <Layer
-                id='streaming-layer'
-                type='circle'
-                source='streaming-source'
-                layout={{}}
-                paint={{
-                  'circle-color': [
-                    'match',
-                    ['get', 'route'],
-                    'Red',
-                    '#da291c',
-                    'Orange',
-                    '#ed8b00',
-                    'Blue',
-                    '#003da5',
-                    'Green-B',
-                    '#00843d',
-                    'Green-C',
-                    '#00843d',
-                    'Green-D',
-                    '#00843d',
-                    'Green-E',
-                    '#00843d',
-                    '#FFC72C',
-                  ],
-                  'circle-stroke-color': 'white',
-                  'circle-stroke-width': 2,
-                  'circle-radius': ['case', ['boolean', ['feature-state', 'hover'], false], 20, 7],
-                  'circle-radius-transition': {
-                    duration: 0,
-                    delay: 0,
-                  },
-                  'circle-emissive-strength': 1,
-                }}
-                minzoom={10}
-              />
-            </Source>
-          )}
+          <MBTARouteLayer shapes={shapes} />
+          <MBTAStreamLayer />
           {clickInfo && (
             <Popup
               longitude={clickInfo.position[0]}
@@ -324,12 +149,12 @@ function MBTAMap({ shapes }: Props) {
               <div
                 id='vehicle-data-container'
                 aria-label='Container for clicked vehicle data'
-                className='flex flex-col pb-4 px-2 min-w-30'
+                className='flex flex-col pb-4 min-w-30'
               >
                 <h4 id='vehicle-route' className='font-bold text-xl'>
                   {clickInfo.route}
                 </h4>
-                <Separator />
+                <Separator className='mt-1'/>
                 <div id='vehicle-data-content' className='mt-4 rid grid-rows-4 gap-1'>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>Direction:</span>
@@ -337,7 +162,9 @@ function MBTAMap({ shapes }: Props) {
                   </div>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>Status:</span>
-                    <p>{clickInfo.currentStatus} {clickInfo.stop}</p>
+                    <p>
+                      {clickInfo.currentStatus} {clickInfo.stop}
+                    </p>
                   </div>
                 </div>
               </div>

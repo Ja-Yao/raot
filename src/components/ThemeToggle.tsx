@@ -36,7 +36,7 @@ function ThemeToggle({ className }: Props) {
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent className='bg-secondary text-secondary-foreground'>Change theme</TooltipContent>
+        <TooltipContent side='right'>Change Appearance</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align='end' className='rounded-xl w-56'>
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
@@ -48,7 +48,6 @@ function ThemeToggle({ className }: Props) {
               setTheme('light');
               map!.setConfigProperty('basemap', 'lightPreset', 'day');
             }}
-            defaultChecked
             value='light'
           >
             Light
