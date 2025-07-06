@@ -1,4 +1,4 @@
-import type { FeatureCollection, Feature, GeoJsonProperties, LineString, Point, Position } from 'geojson';
+import type { FeatureCollection, Feature, GeoJsonProperties, LineString, Point } from 'geojson';
 
 export type LineStringCollection = FeatureCollection<LineString, GeoJsonProperties>;
 export type LineStringFeature = Feature<LineString, GeoJsonProperties>;
