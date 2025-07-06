@@ -5,6 +5,8 @@ export type LineStringFeature = Feature<LineString, GeoJsonProperties>;
 export type PointCollection = FeatureCollection<Point, GeoJsonProperties>;
 export type PointFeature = Feature<Point, GeoJsonProperties>;
 
+export type Theme = "dark" | "light" | "system"
+
 export interface ShapesProps {
   pageOffset?: number;
   pageSize?: number;

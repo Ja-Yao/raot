@@ -5,3 +5,4 @@ export * from './popover';
 export * from './scroll-area';
 export * from './skeleton';
 export * from './sonner';
+export * from './tooltip';

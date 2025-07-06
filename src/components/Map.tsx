@@ -5,8 +5,7 @@ import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from '
 import ThemeToggle from './ThemeToggle';
 
 import { useTheme } from '@/providers/theme-provider';
-import type { Remote } from 'comlink';
-import { proxy, wrap } from 'comlink';
+import { proxy, wrap, type Remote } from 'comlink';
 import type { GeoJsonProperties } from 'geojson';
 import { toast } from 'sonner';
 import type {
@@ -59,7 +58,7 @@ function MBTAMap() {
   const [hoverInfo, setHoverInfo] = useState<GeoJsonProperties>(null)
   const mapRef = useRef(null);
   
-  const handleHover = useCallback(
+  const handleIconClick = useCallback(
     (event: MapMouseEvent) => {
       const feature = event.features && event.features[0];
       if (feature) {
@@ -274,7 +273,7 @@ function MBTAMap() {
         }
         setIsLoaded(true);
       }}
-      onMouseEnter={handleHover}
+      onClick={handleIconClick}
     >
       <ThemeToggle className='absolute top-2 right-2 z-1' />
       <NavigationControl position='bottom-right' style={{ borderRadius: '8px' }} />
@@ -357,7 +356,7 @@ function MBTAMap() {
                 setHoveredFeatureId(null)
               }}
             >
-              hello world!
+              
             </Popup>
           )}
         </>

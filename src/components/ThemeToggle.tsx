@@ -4,15 +4,17 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/providers/theme-provider';
 import { useMap } from 'react-map-gl/mapbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui';
+import type { Theme } from 'types';
 
 interface Props {
   className: string;
@@ -20,52 +22,61 @@ interface Props {
 
 function ThemeToggle({ className }: Props) {
   const { theme, setTheme } = useTheme();
-  const {map} = useMap();
+  const { current: map } = useMap();
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button id='theme-toggle' variant='secondary' size='icon' className={cn('rounded-xl', className)}>
-          <Sun className='h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
-          <Moon className='absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
-          <span className='sr-only'>Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button id='theme-toggle' variant='secondary' size='icon' className={cn('rounded-xl', className)}>
+              <Sun className='h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
+              <Moon className='absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
+              <span className='sr-only'>Toggle theme</span>
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent className='bg-secondary text-secondary-foreground'>Change theme</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align='end' className='rounded-xl w-56'>
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuCheckboxItem
+        <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)}>
+          <DropdownMenuRadioItem
             className='rounded-lg'
             onClick={() => {
               setTheme('light');
-              map?.setConfigProperty('basemap', 'lightPreset', 'day');
+              map!.setConfigProperty('basemap', 'lightPreset', 'day');
             }}
             defaultChecked
-            checked={theme == 'light'}
+            value='light'
           >
             Light
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem className='rounded-lg' onClick={() => {
-            setTheme('dark');
-            map?.setConfigProperty('basemap', 'lightPreset', 'night');
-          }} checked={theme == 'dark'}>
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem
+            className='rounded-lg'
+            onClick={() => {
+              setTheme('dark');
+              map!.setConfigProperty('basemap', 'lightPreset', 'night');
+            }}
+            value='dark'
+          >
             Dark
-          </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem
+          </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem
             className='rounded-lg'
             onClick={() => {
               setTheme('system');
               const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
               isDarkMode
-                ? map?.setConfigProperty('basemap', 'lightPreset', 'night')
-                : map?.setConfigProperty('basemap', 'lightPreset', 'day');
+                ? map!.setConfigProperty('basemap', 'lightPreset', 'night')
+                : map!.setConfigProperty('basemap', 'lightPreset', 'day');
             }}
-            checked={theme == 'system'}
+            value='system'
           >
             System
-          </DropdownMenuCheckboxItem>
-        </DropdownMenuGroup>
+          </DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
