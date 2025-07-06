@@ -1,6 +1,5 @@
 import type { RoutePattern, RoutePatternResponse, RoutePatternsProps, RoutesProps, RoutesResponse } from 'types';
-
-const MBTA_KEY = import.meta.env.VITE_MBTA_KEY;
+import { MBTA_KEY } from './common';
 
 /**
  * Get all the routes from the MBTA API.

@@ -1,9 +1,9 @@
-import { type ShapesProps } from '../../types';
-import * as polyline from '@mapbox/polyline';
-import {featureCollection, lineString} from '@turf/helpers';
 import { dedupeFeatures } from '@/helpers/dedupe-linestrings';
+import * as polyline from '@mapbox/polyline';
+import { featureCollection, lineString } from '@turf/helpers';
+import { type ShapesProps } from '../../types';
+import { MBTA_KEY } from './common';
 
-const MBTA_KEY = import.meta.env.VITE_MBTA_KEY;
 const ALL_ROUTES = 'Red,Orange,Green-B,Green-C,Green-D,Green-E,Blue'
 
 /**
