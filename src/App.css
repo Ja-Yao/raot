@@ -16,14 +16,6 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.mapboxgl-popup {
-  gap: 2px;
-}
-
-.mapboxgl-popup-tip {
-  opacity: 0;
-}
-
 .mapboxgl-popup-content {
   display: flex;
   flex: 1;
