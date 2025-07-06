@@ -295,6 +295,14 @@ export interface MBTASSERemoveEvent {
 
 export type MBTASSEEvent = MBTASSEResetEvent | MBTASSEAddEvent | MBTASSEUpdateEvent | MBTASSERemoveEvent;
 
+export interface MBTAWorkerAPI {
+  startStreaming: (
+    options: { apiKey: string; endpoint: string; filterParams: string },
+    onMessageCallback: (message: WorkerMessageFromWorker) => void // Callback for messages
+  ) => void;
+  stopStreaming: () => void;
+}
+
 /**
  * Defines additional properties for animated vehicle GeoJSON features.
  * These are used to manage the smooth transition of vehicle positions.

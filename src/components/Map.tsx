@@ -4,6 +4,8 @@ import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from 'react-map-gl/mapbox';
 import { getTimes } from 'suncalc';
 
+import * as Comlink from 'comlink';
+import type { GeoJsonProperties } from 'geojson';
 import { toast } from 'sonner';
 import type {
   LineStringCollection,
@@ -11,23 +13,18 @@ import type {
   MBTASSEEventData,
   MBTASSERemoveEvent,
   MBTASSEUpdateEvent,
+  MBTAWorkerAPI,
   PointCollection,
-  Route,
   Shape,
   Trip,
-  WorkerMessageFromWorker,
+  WorkerMessageFromWorker
 } from 'types';
 import { getRoutes } from '../api/all-routes';
 import { shapesToFeatureCollection, streamingEventToPoint } from '../helpers/conversions';
 import MBTASSEWorker from '../workers/mbta-worker?worker';
-import type { GeoJsonProperties } from 'geojson';
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
 const MBTA_KEY = import.meta.env.VITE_MBTA_KEY;
-
-interface Props {
-  setRoutes: React.Dispatch<React.SetStateAction<Route[]>>;
-}
 
 const StreamStatuses = {
   idle: 'idle',
@@ -41,7 +38,7 @@ type StreamStatus = (typeof StreamStatuses)[keyof typeof StreamStatuses];
 
 const routeTypes = '0,1,3';
 
-function MBTAMap({ setRoutes }: Props) {
+function MBTAMap() {
   const [isRendered, setIsRendered] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [shapes, setShapes] = useState<LineStringCollection>({
@@ -115,7 +112,6 @@ function MBTAMap({ setRoutes }: Props) {
           }
         });
 
-        setRoutes(parsedRoutes);
         setShapes(shapesCollection);
       }
     };
@@ -123,25 +119,26 @@ function MBTAMap({ setRoutes }: Props) {
   }, []);
 
   // Use useRef to store the worker instance so it persists across renders
-  const workerRef = useRef<Worker | null>(null);
+  const workerRef = useRef<Comlink.Remote<MBTAWorkerAPI>>(null);
   useEffect(() => {
-    const setupWorker = () => {
-      workerRef.current = new MBTASSEWorker();
-      console.debug('Main thread: Web Worker initialized.');
+    const setupWorker = async () => {
+      // Wrap the worker with Comlink
+      const workerInstance = new MBTASSEWorker();
+      workerRef.current = Comlink.wrap<MBTAWorkerAPI>(workerInstance);
+      console.debug('Main thread: Web Worker initialized with Comlink.');
 
-      workerRef.current.onmessage = (event: MessageEvent<WorkerMessageFromWorker>) => {
-        const { type, payload } = event.data;
+      // Define the callback function to handle messages from the worker
+      const handleWorkerMessage = (message: WorkerMessageFromWorker) => {
+        const { type, payload } = message;
 
         switch (type) {
           case 'status':
-            setConnectionStatus(payload as StreamStatus); // Type assertion for simple string status
+            setConnectionStatus(payload as StreamStatus);
             break;
           case 'data':
             const { eventType, data: eventData } = payload;
-            // Apply the updates to the main thread's state
             switch (eventType) {
               case 'reset':
-                // convert event data to feature collection & cast eventData as MBTASSEEEventData[]
                 const vehicleData = eventData as MBTASSEEventData[];
                 setVehicleData({
                   type: 'FeatureCollection',
@@ -177,7 +174,7 @@ function MBTAMap({ setRoutes }: Props) {
             }
             break;
           case 'error':
-            console.error('Main thread: Caught error from worker:', event);
+            console.error('Main thread: Caught error from worker:', message);
             toast.error("Got an error message. If icons aren't showing, refresh the page", {
               description: new Date().toLocaleDateString(undefined, {
                 weekday: 'short',
@@ -204,13 +201,15 @@ function MBTAMap({ setRoutes }: Props) {
       };
 
       const filterParams = new URLSearchParams();
-
       filterParams.append('filter[route_type]', routeTypes);
 
-      workerRef.current.postMessage({
-        type: 'start',
-        payload: { apiKey: MBTA_KEY, endpoint: 'vehicles', filterParams: filterParams.toString() },
-      });
+      // Call the exposed worker function directly
+      if (workerRef.current) {
+        await workerRef.current.startStreaming(
+          { apiKey: MBTA_KEY, endpoint: 'vehicles', filterParams: filterParams.toString() },
+          Comlink.proxy(handleWorkerMessage) // Use Comlink.proxy to pass the callback
+        );
+      }
     };
     setupWorker();
 
@@ -218,8 +217,11 @@ function MBTAMap({ setRoutes }: Props) {
     return () => {
       if (workerRef.current) {
         console.debug('Main thread: Sending stop message to worker and terminating.');
-        workerRef.current.postMessage({ type: 'stop' });
-        workerRef.current.terminate(); // Important: terminate the worker when component unmounts
+        workerRef.current.stopStreaming(); // Call the exposed stop function
+        // Comlink handles the termination of the underlying worker instance when the proxy is no longer referenced.
+        // However, explicitly terminating the worker can be done if needed, but Comlink usually manages the lifecycle.
+        // If you want to explicitly terminate the underlying worker:
+        // (workerRef.current as any)[Comlink.releaseProxy](); // This releases the proxy and potentially the worker
         workerRef.current = null;
       }
     };
@@ -347,9 +349,9 @@ function MBTAMap({ setRoutes }: Props) {
                   ],
                   'circle-stroke-color': 'white',
                   'circle-stroke-width': 2,
-                  'circle-radius': ['case', ['boolean', ['feature-state', 'hover'], 'false'], 20, 10],
+                  'circle-radius': ['case', ['boolean', ['feature-state', 'hover'], false], 20, 7],
                   'circle-radius-transition': {
-                    duration: 500,
+                    duration: 0,
                     delay: 0,
                   },
                   'circle-emissive-strength': 1,
@@ -360,10 +362,9 @@ function MBTAMap({ setRoutes }: Props) {
           )}
           {hoverInfo && (
             <Popup
-              anchor='top'
               longitude={hoverInfo.position[0]}
               latitude={hoverInfo.position[1]}
-              onClose={(e) => {
+              onClose={() => {
                 setHoverInfo(null);
                 setHoveredFeatureId(null)
               }}
