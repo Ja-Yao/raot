@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/providers/theme-provider';
+import { useMap } from 'react-map-gl/mapbox';
 
 interface Props {
   className: string;
@@ -19,6 +20,7 @@ interface Props {
 
 function ThemeToggle({ className }: Props) {
   const { theme, setTheme } = useTheme();
+  const {map} = useMap();
 
   return (
     <DropdownMenu>
@@ -35,18 +37,30 @@ function ThemeToggle({ className }: Props) {
         <DropdownMenuGroup>
           <DropdownMenuCheckboxItem
             className='rounded-lg'
-            onClick={() => setTheme('light')}
+            onClick={() => {
+              setTheme('light');
+              map?.setConfigProperty('basemap', 'lightPreset', 'day');
+            }}
             defaultChecked
             checked={theme == 'light'}
           >
             Light
           </DropdownMenuCheckboxItem>
-          <DropdownMenuCheckboxItem className='rounded-lg' onClick={() => setTheme('dark')} checked={theme == 'dark'}>
+          <DropdownMenuCheckboxItem className='rounded-lg' onClick={() => {
+            setTheme('dark');
+            map?.setConfigProperty('basemap', 'lightPreset', 'night');
+          }} checked={theme == 'dark'}>
             Dark
           </DropdownMenuCheckboxItem>
           <DropdownMenuCheckboxItem
             className='rounded-lg'
-            onClick={() => setTheme('system')}
+            onClick={() => {
+              setTheme('system');
+              const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+              isDarkMode
+                ? map?.setConfigProperty('basemap', 'lightPreset', 'night')
+                : map?.setConfigProperty('basemap', 'lightPreset', 'day');
+            }}
             checked={theme == 'system'}
           >
             System

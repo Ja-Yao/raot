@@ -2,8 +2,9 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from 'react-map-gl/mapbox';
-import { getTimes } from 'suncalc';
+import ThemeToggle from './ThemeToggle';
 
+import { useTheme } from '@/providers/theme-provider';
 import type { Remote } from 'comlink';
 import { proxy, wrap } from 'comlink';
 import type { GeoJsonProperties } from 'geojson';
@@ -40,6 +41,7 @@ type StreamStatus = (typeof StreamStatuses)[keyof typeof StreamStatuses];
 const routeTypes = '0,1,3';
 
 function MBTAMap() {
+  const { theme } = useTheme();
   const [isRendered, setIsRendered] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [shapes, setShapes] = useState<LineStringCollection>({
@@ -253,43 +255,28 @@ function MBTAMap() {
             }
           );
         }
-
-        const center = e.target.getCenter();
-        const today = new Date();
-        const sunTimes = getTimes(today, center.lat, center.lng);
-        const dawn = sunTimes.dawn.getTime();
-        const sunrise = sunTimes.sunriseEnd.getTime();
-        const sunset = sunTimes.sunsetStart.getTime();
-        const dusk = sunTimes.dusk.getTime();
-        const time = today.getTime();
-        const twentyMinutes = 1.2e6;
-
-        let preset;
-        if (time >= dawn - twentyMinutes && time < sunrise) {
-          // Before sunrise, within the 20-minute window
-          preset = 'dawn';
-        } else if (time >= sunrise + twentyMinutes && time < sunset - twentyMinutes) {
-          preset = 'day';
-        } else if (time >= sunset - twentyMinutes && time < dusk) {
-          preset = 'dusk';
-        } else {
-          preset = 'night';
-        }
-
-        const currentPreset: string = e.target.getConfigProperty('basemap', 'lightPreset');
-        if (currentPreset && currentPreset !== preset) {
-          e.target.setConfigProperty('basemap', 'lightPreset', preset);
-        }
       }}
       onLoad={(e) => {
         e.target.loadImage('src/assets/navigation-arrow.png', (error, image) => {
           if (error) throw error;
           e.target.addImage('nav-arrow', image as HTMLImageElement, { sdf: true });
         });
+
+        if (theme == 'light') {
+          e.target.setConfigProperty('basemap', 'lightPreset', 'day');
+        } else if (theme == 'dark') {
+          e.target.setConfigProperty('basemap', 'lightPreset', 'night');
+        } else {
+          const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          isDarkMode
+            ? e.target.setConfigProperty('basemap', 'lightPreset', 'night')
+            : e.target.setConfigProperty('basemap', 'lightPreset', 'day');
+        }
         setIsLoaded(true);
       }}
       onMouseEnter={handleHover}
     >
+      <ThemeToggle className='absolute top-2 right-2 z-1' />
       <NavigationControl position='bottom-right' style={{ borderRadius: '8px' }} />
       <GeolocateControl
         positionOptions={{ enableHighAccuracy: true }}
