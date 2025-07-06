@@ -4,6 +4,7 @@ import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, Layer, NavigationControl, Popup, Source } from 'react-map-gl/mapbox';
 import ThemeToggle from './ThemeToggle';
 
+import { MBTA_KEY, ROUTE_TYPES } from '@/api/common';
 import { useTheme } from '@/providers/theme-provider';
 import { proxy, wrap, type Remote } from 'comlink';
 import type { GeoJsonProperties } from 'geojson';
@@ -16,37 +17,24 @@ import type {
   MBTASSEUpdateEvent,
   MBTAWorkerAPI,
   PointCollection,
-  Shape,
-  Trip,
+  StreamStatus,
   WorkerMessageFromWorker
 } from 'types';
-import { getRoutes } from '../api/all-routes';
-import { shapesToFeatureCollection, streamingEventToPoint } from '../helpers/conversions';
+import { streamingEventToPoint } from '../helpers/conversions';
 import MBTASSEWorker from '../workers/mbta-worker?worker';
+import { Separator } from './ui/separator';
+import { getStop } from '@/api/stops';
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
-const MBTA_KEY = import.meta.env.VITE_MBTA_KEY;
 
-const StreamStatuses = {
-  idle: 'idle',
-  connecting: 'connecting',
-  open: 'open',
-  closed: 'closed',
-  error: 'error',
-} as const;
+interface Props {
+  shapes: LineStringCollection;
+}
 
-type StreamStatus = (typeof StreamStatuses)[keyof typeof StreamStatuses];
-
-const routeTypes = '0,1,3';
-
-function MBTAMap() {
+function MBTAMap({ shapes }: Props) {
   const { theme } = useTheme();
   const [isRendered, setIsRendered] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [shapes, setShapes] = useState<LineStringCollection>({
-    type: 'FeatureCollection',
-    features: [],
-  });
   const [viewState, setViewState] = useState<React.ComponentProps<typeof Map>['initialViewState'] | ViewState>({
     longitude: -71.0565,
     latitude: 42.3555,
@@ -54,71 +42,48 @@ function MBTAMap() {
   });
   const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
   const [connectionStatus, setConnectionStatus] = useState<StreamStatus>('closed');
-  const [hoveredFeatureId, setHoveredFeatureId] = useState<string|null>(null);
-  const [hoverInfo, setHoverInfo] = useState<GeoJsonProperties>(null)
+  const [clickedFeatureId, setClickedFeatureId] = useState<string>('');
+  const [clickInfo, setClickInfo] = useState<GeoJsonProperties>(null);
   const mapRef = useRef(null);
-  
-  const handleIconClick = useCallback(
-    (event: MapMouseEvent) => {
+
+  const findStop = async (id: string) => {
+    const stop = await getStop(id);
+    return stop;
+  };
+
+  const handleIconClick = useCallback(async (event: MapMouseEvent) => {
       const feature = event.features && event.features[0];
       if (feature) {
         if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
-          setHoveredFeatureId(feature.properties!.label);
+          const relatedStop = await findStop(feature.properties!.stop);
+          setClickedFeatureId(feature.properties!.label);
 
           let position = feature.properties!.position;
-          position = position.substring(1, position.length - 1).split(',').map(Number) as [number, number]
-          setHoverInfo({ ...feature.properties, position: position});
+          position = position
+            .substring(1, position.length - 1)
+            .split(',')
+            .map(Number) as [number, number];
+          const vehicleStatus = feature.properties!.currentStatus;
+
+          let currentStatus;
+          if (vehicleStatus === 'STOPPED_AT') {
+            currentStatus = 'Stopped at';
+          } else if (vehicleStatus === 'IN_TRANSIT_TO') {
+            currentStatus = 'In transit to';
+          } else if (vehicleStatus === 'INCOMING_AT') {
+            currentStatus = 'Arriving at'
+          }
+          setClickInfo({
+            ...feature.properties,
+            currentStatus: currentStatus,
+            position: position,
+            stop: relatedStop.name,
+          });
         }
       }
     },
-    [hoveredFeatureId, hoverInfo]
+    [clickedFeatureId, clickInfo]
   );
-
-  // Fetch routes and shapes when the component mounts
-  useEffect(() => {
-    const fetchRoutes = async () => {
-      const chainedRoutes = await getRoutes({
-        key: MBTA_KEY,
-        filterTypes: routeTypes,
-        include: 'route_patterns.representative_trip.shape',
-      });
-      const parsedRoutes = chainedRoutes.data;
-
-      parsedRoutes.forEach((route) => {
-        route.attributes.color = '#' + route.attributes.color;
-      });
-
-      if (chainedRoutes?.included) {
-        const parsedTrips = chainedRoutes.included.filter(
-          (item) => item.type === 'trip'
-        ) as Trip[];
-
-        const parsedShapes = chainedRoutes.included.filter(
-          (item) => item.type === 'shape'
-        ) as Shape[];
-        const shapesCollection = shapesToFeatureCollection(parsedShapes);
-
-        shapesCollection.features.forEach((feature) => {
-          if (!feature.properties) throw new Error('Feature properties are undefined');
-
-          const properties = feature.properties;
-          const shapeId = properties?.id as string;
-          const relatedTrip = parsedTrips.find((trip) => trip.relationships.shape.data.id === shapeId);
-          if (relatedTrip) {
-            const relatedRoute = parsedRoutes.find((route) => route.id === relatedTrip.relationships.route.data.id);
-            if (relatedRoute) {
-              feature.properties['color'] = relatedRoute.attributes.color;
-            }
-          } else {
-            throw new Error(`No trip found for shape ID ${shapeId}}`);
-          }
-        });
-
-        setShapes(shapesCollection);
-      }
-    };
-    fetchRoutes();
-  }, []);
 
   // Use useRef to store the worker instance so it persists across renders
   const workerRef = useRef<Remote<MBTAWorkerAPI>>(null);
@@ -203,7 +168,7 @@ function MBTAMap() {
       };
 
       const filterParams = new URLSearchParams();
-      filterParams.append('filter[route_type]', routeTypes);
+      filterParams.append('filter[route_type]', ROUTE_TYPES);
 
       // Call the exposed worker function directly
       if (workerRef.current) {
@@ -347,16 +312,35 @@ function MBTAMap() {
               />
             </Source>
           )}
-          {hoverInfo && (
+          {clickInfo && (
             <Popup
-              longitude={hoverInfo.position[0]}
-              latitude={hoverInfo.position[1]}
+              longitude={clickInfo.position[0]}
+              latitude={clickInfo.position[1]}
               onClose={() => {
-                setHoverInfo(null);
-                setHoveredFeatureId(null)
+                setClickInfo(null);
+                setClickedFeatureId('');
               }}
             >
-              
+              <div
+                id='vehicle-data-container'
+                aria-label='Container for clicked vehicle data'
+                className='flex flex-col pb-4 px-2 min-w-30'
+              >
+                <h4 id='vehicle-route' className='font-bold text-xl'>
+                  {clickInfo.route}
+                </h4>
+                <Separator />
+                <div id='vehicle-data-content' className='mt-4 rid grid-rows-4 gap-1'>
+                  <div className='grid grid-cols-2'>
+                    <span className='font-semibold text-sm'>Direction:</span>
+                    <p>{clickInfo.direction}</p>
+                  </div>
+                  <div className='grid grid-cols-2'>
+                    <span className='font-semibold text-sm'>Status:</span>
+                    <p>{clickInfo.currentStatus} {clickInfo.stop}</p>
+                  </div>
+                </div>
+              </div>
             </Popup>
           )}
         </>

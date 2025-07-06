@@ -1,5 +1,6 @@
 #root {
   height: 100vh;
+  font: var(--font-sans);
 }
 
 .logo {
@@ -24,7 +25,26 @@
 }
 
 .mapboxgl-popup-content {
+  display: flex;
+  flex: 1;
+  flex-shrink: 0;
+  background-color: var(--color-popover);
+  color: var(--color-popover-foreground);
   border-radius: 1rem;
+  min-width: 128px;
+}
+
+.mapboxgl-popup-close-button {
+  height: 2em;
+  width: 2em;
+  font-size: larger;
+  border-radius: 0.5rem;
+  margin-top: calc(var(--spacing) * 2);
+  margin-right: calc(var(--spacing) * 1.5);
+}
+
+.mapboxgl-popup-close-button:hover {
+  border: 1px solid var(--color-border);
 }
 
 @keyframes logo-spin {

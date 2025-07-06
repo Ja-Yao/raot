@@ -239,6 +239,24 @@ export interface MBTAData {
   };
 }
 
+export type Stop = {
+  address: string | null;
+  at_street: string;
+  description: string | null;
+  latitude: number;
+  location_type: number;
+  longitude: number;
+  municipality: string;
+  name: string;
+  on_street: string;
+  platform_code: string | number;
+  platform_name: string;
+  vehicle_type: number;
+  wheelchair_boarding: number;
+};
+
+// ----------------------------------SSE Type Definitions----------------------------------
+
 export interface MBTASSEEventPayload {
   // This is what the worker will send
   eventType: 'reset' | 'add' | 'update' | 'remove';
@@ -305,40 +323,12 @@ export interface MBTAWorkerAPI {
   stopStreaming: () => void;
 }
 
-/**
- * Defines additional properties for animated vehicle GeoJSON features.
- * These are used to manage the smooth transition of vehicle positions.
- */
-export interface AnimatedVehicleProperties {
-  color: string; // The color of the vehicle's route
-  id: string; // The ID of the MBTA route (e.g., 'Red', 'Orange')
-  direction_id?: number; // Direction of travel for the vehicle (0 or 1)
-  label?: string; // Optional label for the vehicle
+const StreamStatuses = {
+  idle: 'idle',
+  connecting: 'connecting',
+  open: 'open',
+  closed: 'closed',
+  error: 'error',
+} as const;
 
-  // Animation related properties:
-  currentCoordinates?: Position; // The currently displayed interpolated coordinates during animation
-  previousCoordinates?: Position; // The coordinates from where the current animation started
-  targetCoordinates: Position; // The destination coordinates for the current animation
-  animationStartTime?: number; // Timestamp (from performance.now()) when the animation for this point started
-  animationDuration: number; // The total duration of the animation in milliseconds
-}
-
-/**
- * Represents an individual GeoJSON Point feature with extended properties
- * specifically for animating MBTA vehicle positions.
- * It ensures the feature itself has an `id` property, which is crucial for
- * Mapbox GL JS to identify and update individual features efficiently.
- */
-export interface AnimatedVehicleFeature extends Feature<Point, AnimatedVehicleProperties> {
-  id: string; // Mandatory: Ensure the feature has a string ID for efficient updates
-  route?: string;
-}
-
-/**
- * Represents a GeoJSON FeatureCollection specifically designed to hold
- * `AnimatedVehicleFeature` objects. This is the type used for the `vehicleData`
- * state in your `MBTAMap` component.
- */
-export interface AnimatedPointCollection extends FeatureCollection<Point, AnimatedVehicleProperties> {
-  features: AnimatedVehicleFeature[]; // Ensures the features array contains AnimatedVehicleFeature
-}
+export type StreamStatus = (typeof StreamStatuses)[keyof typeof StreamStatuses];
