@@ -25,9 +25,9 @@ function MBTAMap({ shapes }: Props) {
   const [isRendered, setIsRendered] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewState, setViewState] = useState<React.ComponentProps<typeof Map>['initialViewState'] | ViewState>({
-    longitude: -71.0565,
-    latitude: 42.3555,
-    zoom: 15,
+    longitude: -95,
+    latitude: 39,
+    zoom: 4,
   });
   const [clickedFeatureId, setClickedFeatureId] = useState<string>('');
   const [clickInfo, setClickInfo] = useState<GeoJsonProperties>(null);
@@ -141,7 +141,7 @@ function MBTAMap({ shapes }: Props) {
         if (navigator.geolocation && !isRendered) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude] });
+              e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15 });
               setIsRendered(true); // Set isLoaded to true after initial geolocation
             },
             (error) => {
