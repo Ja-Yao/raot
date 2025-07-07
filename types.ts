@@ -269,6 +269,69 @@ export type Prediction = {
   update_type: string | null;
 };
 
+export interface AlertResponse {
+  links: {
+    self: string;
+    prev: string;
+    next: string;
+    last: string;
+    first: string;
+  };
+  data: [
+    {
+      type: string;
+      relationships: {
+        facility: {
+          links: {
+            self: string;
+            related: string;
+          };
+          data: {
+            type: string;
+            id: string;
+          };
+        };
+      };
+      links: {};
+      id: string;
+      attributes: {
+        url: string;
+        updated_at: string;
+        timeframe: string;
+        short_header: string;
+        severity: number;
+        service_effect: string;
+        lifecycle: string;
+        informed_entity: [
+          {
+            trip: string;
+            stop: string;
+            route_type: number;
+            route: string;
+            facility: string;
+            direction_id: number;
+            activities: string[];
+          },
+        ];
+        image_alternative_text: string;
+        image: string;
+        header: string;
+        effect_name: string;
+        effect: string;
+        duration_certainty: string;
+        description: string;
+        created_at: string;
+        cause: string;
+        banner: string;
+        active_period: {
+          start: string;
+          end: string;
+        }[];
+      };
+    },
+  ];
+}
+
 // ----------------------------------SSE Type Definitions----------------------------------
 
 export interface MBTASSEEventPayload {
