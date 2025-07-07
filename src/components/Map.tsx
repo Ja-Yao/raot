@@ -66,64 +66,64 @@ function MBTAMap({ shapes }: Props) {
       return { stop: stopValue, prediction: predictionValue };
     } catch (error) {
       console.error('Error fetching stop and prediction:', error);
-      toast.error('Something went wrong.', { description: 'Failed to fetch stop and prediction.' })
+      toast.error('Something went wrong.', { description: 'Failed to fetch stop and prediction.' });
       throw error;
     }
   };
 
   const handleIconClick = useCallback(
-  async (event: MapMouseEvent) => {
-    const feature = event.features && event.features[0];
-    if (feature) {
-      if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
-        const { stop, prediction } = await fetchStopAndPrediction(
-          feature.properties!.stop as string,
-          feature.properties!.trip as string,
-          feature.properties!.stop as string,
-          feature.properties!.direction as string,
-        );
+    async (event: MapMouseEvent) => {
+      const feature = event.features && event.features[0];
+      if (feature) {
+        if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
+          const { stop, prediction } = await fetchStopAndPrediction(
+            feature.properties!.stop as string,
+            feature.properties!.trip as string,
+            feature.properties!.stop as string,
+            feature.properties!.direction as string
+          );
 
-        setClickedFeatureId(feature.properties!.label);
+          setClickedFeatureId(feature.properties!.label);
 
-        let position = feature.properties!.position;
-        position = position
-          .substring(1, position.length - 1)
-          .split(',')
-          .map(Number) as [number, number];
-        const vehicleStatus = feature.properties!.currentStatus;
+          let position = feature.properties!.position;
+          position = position
+            .substring(1, position.length - 1)
+            .split(',')
+            .map(Number) as [number, number];
+          const vehicleStatus = feature.properties!.currentStatus;
 
-        let currentStatus;
-        if (vehicleStatus === 'STOPPED_AT') {
-          currentStatus = 'Stopped at';
-        } else if (vehicleStatus === 'IN_TRANSIT_TO') {
-          currentStatus = 'In transit to';
-        } else if (vehicleStatus === 'INCOMING_AT') {
-          currentStatus = 'Arriving at';
+          let currentStatus;
+          if (vehicleStatus === 'STOPPED_AT') {
+            currentStatus = 'Stopped at';
+          } else if (vehicleStatus === 'IN_TRANSIT_TO') {
+            currentStatus = 'In transit';
+          } else if (vehicleStatus === 'INCOMING_AT') {
+            currentStatus = 'Arriving at';
+          }
+
+          const stopName = stop?.value!.name;
+          const eta = prediction?.value!.arrival_time!;
+          const etd = prediction?.value!.departure_time!;
+
+          console.log(eta);
+          console.log(etd);
+
+          // Create a new object combining feature.properties with additional properties
+          const newClickInfo: GeoJsonProperties = {
+            ...feature.properties,
+            currentStatus: currentStatus,
+            position: position,
+            stop: stopName,
+            eta: new Date(eta),
+            etd: new Date(etd),
+          };
+
+          setClickInfo(newClickInfo);
         }
-
-        const stopName = stop?.value!.name;
-        const eta = prediction?.value!.arrival_time!;
-        const etd = prediction?.value!.departure_time!;
-
-        console.log(eta)
-        console.log(etd)
-
-        // Create a new object combining feature.properties with additional properties
-        const newClickInfo: GeoJsonProperties = {
-          ...feature.properties,
-          currentStatus: currentStatus,
-          position: position,
-          stop: stopName,
-          eta: new Date(eta),
-          etd: new Date(etd),
-        };
-
-        setClickInfo(newClickInfo);
       }
-    }
-  },
-  [clickedFeatureId, clickInfo]
-);
+    },
+    [clickedFeatureId, clickInfo]
+  );
 
   return (
     <Map
@@ -204,7 +204,7 @@ function MBTAMap({ shapes }: Props) {
               <div
                 id='vehicle-data-container'
                 aria-label='Container for clicked vehicle data'
-                className='flex flex-col pb-4 min-w-30'
+                className='flex flex-col pb-4 min-w-[196px]'
               >
                 <h4 id='vehicle-route' className='font-bold text-xl'>
                   <>{/^\d+$/.test(clickInfo.route) ? `${clickInfo.route} Bus` : clickInfo.route}</>
@@ -217,9 +217,13 @@ function MBTAMap({ shapes }: Props) {
                   </div>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>Status:</span>
-                    <p>
-                      {clickInfo.currentStatus} {clickInfo.stop}
-                    </p>
+                    <p>{clickInfo.currentStatus}</p>
+                  </div>
+                  <div className='grid grid-cols-2'>
+                    <span className='font-semibold text-sm'>
+                      {`${clickInfo.currentStatus === 'Stopped at' ? 'Stop:' : 'Next Stop:'}`}
+                    </span>
+                    <p>{clickInfo.stop}</p>
                   </div>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>ETA:</span>
