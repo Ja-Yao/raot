@@ -171,7 +171,7 @@ function MBTAMap({ shapes }: Props) {
       }}
       onClick={handleIconClick}
     >
-      <ThemeToggle className='absolute bottom-10 left-2 z-1' />
+      <ThemeToggle className='absolute top-2 right-2 z-1' />
       <NavigationControl position='bottom-right' style={{ borderRadius: '8px' }} />
       <GeolocateControl
         positionOptions={{ enableHighAccuracy: true }}
