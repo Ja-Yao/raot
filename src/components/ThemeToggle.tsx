@@ -36,10 +36,10 @@ function ThemeToggle({ className }: Props) {
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>Change Appearance</TooltipContent>
+        <TooltipContent>{theme} theme</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align='end' className='rounded-xl w-56'>
-        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+        <DropdownMenuLabel>Theme</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)}>
           <DropdownMenuRadioItem

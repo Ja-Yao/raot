@@ -172,14 +172,14 @@ function MBTAMap({ shapes }: Props) {
       onClick={handleIconClick}
     >
       <ThemeToggle className='absolute top-2 right-2 z-1' />
-      <NavigationControl position='bottom-right' style={{ borderRadius: '8px' }} />
+      <NavigationControl position='bottom-right' style={{ borderRadius: '0.5rem' }} />
       <GeolocateControl
         positionOptions={{ enableHighAccuracy: true }}
         trackUserLocation={true}
         showUserHeading={true}
         showUserLocation={true}
         position='bottom-right'
-        style={{ borderRadius: '8px' }}
+        style={{ borderRadius: '0.5rem' }}
         onGeolocate={(pos) => {
           setViewState({
             longitude: pos.coords.longitude,
@@ -187,7 +187,6 @@ function MBTAMap({ shapes }: Props) {
           });
         }}
       />
-      {/* <FullscreenControl position='top-right' style={{ borderRadius: '8px' }} /> */}
       {isLoaded && (
         <>
           <MBTARouteLayer shapes={shapes} setIsMBTAVisible={setIsMBTAVisible} />
