@@ -1,12 +1,14 @@
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useCallback, useRef, useState } from 'react';
 import type { MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
-import Map, { FullscreenControl, GeolocateControl, NavigationControl, Popup } from 'react-map-gl/mapbox';
+import Map, { GeolocateControl, NavigationControl, Popup } from 'react-map-gl/mapbox';
 import ThemeToggle from './ThemeToggle';
 
+import { getPrediction } from '@/api/predictions';
 import { getStop } from '@/api/stops';
 import { useTheme } from '@/providers/theme-provider';
 import type { GeoJsonProperties } from 'geojson';
+import { toast } from 'sonner';
 import type { LineStringCollection } from 'types';
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
 import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
@@ -32,45 +34,96 @@ function MBTAMap({ shapes }: Props) {
   const [isMBTAVisible, setIsMBTAVisible] = useState(false);
   const mapRef = useRef(null);
 
+  const findStop = async (id: string) => {
+    try {
+      const stopResult = await getStop(id);
+      return { status: 'fulfilled', value: stopResult };
+    } catch (error) {
+      return { status: 'rejected', reason: error };
+    }
+  };
+
+  const getTripPrediction = async (trip: string, stop: string, direction: string) => {
+    try {
+      const predictionResult = await getPrediction(trip, stop, direction);
+      return { status: 'fulfilled', value: predictionResult };
+    } catch (error) {
+      return { status: 'rejected', reason: error };
+    }
+  };
+
+  const fetchStopAndPrediction = async (id: string, trip: string, stop: string, direction: string) => {
+    try {
+      const [stopResult, predictionResult] = await Promise.allSettled([
+        findStop(id),
+        getTripPrediction(trip, stop, direction),
+      ]);
+
+      // Extract the value or reason from each result
+      const stopValue = stopResult.status === 'fulfilled' ? stopResult.value : null;
+      const predictionValue = predictionResult.status === 'fulfilled' ? predictionResult.value : null;
+
+      return { stop: stopValue, prediction: predictionValue };
+    } catch (error) {
+      console.error('Error fetching stop and prediction:', error);
+      toast.error('Something went wrong.', { description: 'Failed to fetch stop and prediction.' })
+      throw error;
+    }
+  };
+
   const handleIconClick = useCallback(
-    async (event: MapMouseEvent) => {
-      const findStop = async (id: string) => {
-        const stop = await getStop(id);
-        return stop;
-      };
+  async (event: MapMouseEvent) => {
+    const feature = event.features && event.features[0];
+    if (feature) {
+      if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
+        const { stop, prediction } = await fetchStopAndPrediction(
+          feature.properties!.stop as string,
+          feature.properties!.trip as string,
+          feature.properties!.stop as string,
+          feature.properties!.direction as string,
+        );
 
-      const feature = event.features && event.features[0];
-      if (feature) {
-        if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
-          const relatedStop = await findStop(feature.properties!.stop);
-          setClickedFeatureId(feature.properties!.label);
+        setClickedFeatureId(feature.properties!.label);
 
-          let position = feature.properties!.position;
-          position = position
-            .substring(1, position.length - 1)
-            .split(',')
-            .map(Number) as [number, number];
-          const vehicleStatus = feature.properties!.currentStatus;
+        let position = feature.properties!.position;
+        position = position
+          .substring(1, position.length - 1)
+          .split(',')
+          .map(Number) as [number, number];
+        const vehicleStatus = feature.properties!.currentStatus;
 
-          let currentStatus;
-          if (vehicleStatus === 'STOPPED_AT') {
-            currentStatus = 'Stopped at';
-          } else if (vehicleStatus === 'IN_TRANSIT_TO') {
-            currentStatus = 'In transit to';
-          } else if (vehicleStatus === 'INCOMING_AT') {
-            currentStatus = 'Arriving at';
-          }
-          setClickInfo({
-            ...feature.properties,
-            currentStatus: currentStatus,
-            position: position,
-            stop: relatedStop.name,
-          });
+        let currentStatus;
+        if (vehicleStatus === 'STOPPED_AT') {
+          currentStatus = 'Stopped at';
+        } else if (vehicleStatus === 'IN_TRANSIT_TO') {
+          currentStatus = 'In transit to';
+        } else if (vehicleStatus === 'INCOMING_AT') {
+          currentStatus = 'Arriving at';
         }
+
+        const stopName = stop?.value!.name;
+        const eta = prediction?.value!.arrival_time!;
+        const etd = prediction?.value!.departure_time!;
+
+        console.log(eta)
+        console.log(etd)
+
+        // Create a new object combining feature.properties with additional properties
+        const newClickInfo: GeoJsonProperties = {
+          ...feature.properties,
+          currentStatus: currentStatus,
+          position: position,
+          stop: stopName,
+          eta: new Date(eta),
+          etd: new Date(etd),
+        };
+
+        setClickInfo(newClickInfo);
       }
-    },
-    [clickedFeatureId, clickInfo]
-  );
+    }
+  },
+  [clickedFeatureId, clickInfo]
+);
 
   return (
     <Map
@@ -134,7 +187,7 @@ function MBTAMap({ shapes }: Props) {
           });
         }}
       />
-      <FullscreenControl position='top-right' style={{ borderRadius: '8px' }} />
+      {/* <FullscreenControl position='top-right' style={{ borderRadius: '8px' }} /> */}
       {isLoaded && (
         <>
           <MBTARouteLayer shapes={shapes} setIsMBTAVisible={setIsMBTAVisible} />
@@ -160,13 +213,17 @@ function MBTAMap({ shapes }: Props) {
                 <div id='vehicle-data-content' className='mt-4 rid grid-rows-4 gap-1'>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>Direction:</span>
-                    <p>{clickInfo.direction}</p>
+                    <p>{clickInfo.direction === '0' ? 'Outbound' : 'Inbound'}</p>
                   </div>
                   <div className='grid grid-cols-2'>
                     <span className='font-semibold text-sm'>Status:</span>
                     <p>
                       {clickInfo.currentStatus} {clickInfo.stop}
                     </p>
+                  </div>
+                  <div className='grid grid-cols-2'>
+                    <span className='font-semibold text-sm'>ETA:</span>
+                    <p>{clickInfo.eta.toLocaleTimeString()}</p>
                   </div>
                 </div>
               </div>

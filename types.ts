@@ -255,6 +255,20 @@ export type Stop = {
   wheelchair_boarding: number;
 };
 
+export type Prediction = {
+  arrival_time: string;
+  arrival_uncertainty: number | null;
+  departure_time: string;
+  departure_uncertainty: number | null;
+  direction_id: number;
+  last_trip: boolean;
+  revenue: string;
+  schedule_relationship: string | null;
+  status: string;
+  stop_sequence: number;
+  update_type: string | null;
+};
+
 // ----------------------------------SSE Type Definitions----------------------------------
 
 export interface MBTASSEEventPayload {

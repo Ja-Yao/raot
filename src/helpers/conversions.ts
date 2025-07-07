@@ -43,14 +43,15 @@ export const shapesToFeatureCollection = (shapes: Shape[]): LineStringCollection
       },
       id: data.id,
       properties: {
-        direction: Number(data.attributes.direction_id) == 0 ? 'Outbound' : 'Inbound',
+        direction: data.attributes.direction_id,
         bearing: data.attributes.bearing,
         currentStatus: data.attributes.current_status,
         label: data.attributes.label,
         route: data.relationships.route.data.id,
         speed: data.attributes.speed,
         position: coordinates, // used for hover popup
-        stop: data.relationships.stop.data ? data.relationships.stop.data.id : undefined
+        stop: data.relationships.stop.data ? data.relationships.stop.data.id : undefined,
+        trip: data.relationships.trip.data.id
       },
     };
   };
