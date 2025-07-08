@@ -20,7 +20,7 @@ export async function getMBTAAlerts(
   params.append('filter[route_type]', routeType);
   params.append('filter[severity]', severity);
   if (onlyActiveAlerts) {
-    params.append('filter[datetime', 'NOW');
+    params.append('filter[datetime]', 'NOW');
   }
 
   const response = await fetch(`/api/alerts?${params}`, {
