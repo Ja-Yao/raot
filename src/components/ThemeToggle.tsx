@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui';
 import type { Theme } from 'types';
 
 interface Props {
-  className: string;
+  className?: string;
 }
 
 function ThemeToggle({ className }: Props) {
