@@ -1,31 +1,11 @@
-import * as turf from '@turf/turf';
-import { useEffect } from 'react';
-import { Layer, Source, useMap } from 'react-map-gl/mapbox';
+import { Layer, Source } from 'react-map-gl/mapbox';
 import type { LineStringCollection } from 'types';
 
 interface Props {
   shapes: LineStringCollection;
-  setIsMBTAVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-function MBTARouteLayer({ shapes, setIsMBTAVisible }: Props) {
-  const { current: map } = useMap();
-
-  useEffect(() => {
-    const checkVisibility = () => {
-      const mapBounds = map?.getCenter().toArray();
-      const bufferedBBox = turf.buffer(turf.bboxPolygon(turf.bbox(shapes)), 15, { units: 'kilometers' });
-      const shapesBBox = turf.bboxPolygon(turf.bbox(bufferedBBox!));
-
-      if (turf.booleanPointInPolygon(turf.getCoord(turf.point(mapBounds as number[])), shapesBBox)) {
-        setIsMBTAVisible(true);
-      } else {
-        setIsMBTAVisible(false);
-      }
-    };
-
-    checkVisibility();
-  });
+function MBTARouteLayer({ shapes }: Props) {
 
   return (
     <Source id='shape-source' type='geojson' data={shapes}>

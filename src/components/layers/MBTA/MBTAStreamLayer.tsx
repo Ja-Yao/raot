@@ -14,17 +14,11 @@ import type {
   MBTASSERemoveEvent,
   MBTASSEUpdateEvent,
   MBTAWorkerAPI,
-  StreamStatus,
   WorkerMessageFromWorker
 } from 'types';
 
-interface Props {
-  visible: boolean;
-}
-
-function MBTAStreamLayer({ visible }: Props) {
+function MBTAStreamLayer() {
   const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
-  const [connectionStatus, setConnectionStatus] = useState<StreamStatus>('closed');
 
   // Use useRef to store the worker instance so it persists across renders
   const workerRef = useRef<Remote<MBTAWorkerAPI>>(null);
@@ -41,7 +35,11 @@ function MBTAStreamLayer({ visible }: Props) {
 
         switch (type) {
           case 'status':
-            setConnectionStatus(payload as StreamStatus);
+            // no action required
+            if (payload.data === 'connected') {
+              toast.success('Connected to MBTA Stream')
+            }
+            console.debug(`SSE connection status: ${payload.data}`)
             break;
           case 'data':
             const { eventType, data: eventData } = payload;
@@ -123,11 +121,7 @@ function MBTAStreamLayer({ visible }: Props) {
         );
       }
     };
-    if (visible) {
-      setupWorker();
-    } else {
-      setVehicleData({ type: 'FeatureCollection', features: [] });
-    }
+    setupWorker();
 
     // Cleanup function: Send 'stop' message to worker and terminate it
     return () => {
@@ -139,18 +133,10 @@ function MBTAStreamLayer({ visible }: Props) {
         // If you want to explicitly terminate the underlying worker:
         // (workerRef.current as any)[Comlink.releaseProxy](); // This releases the proxy and potentially the worker
         workerRef.current = null;
-        toast.warning(`Disconnected from the MBTA API`, {
-          description: 'Pan the map back over the Boston area to refresh the data.',
-        });
+        setVehicleData({ type: 'FeatureCollection', features: [] });
       }
     };
-  }, [visible]);
-
-  useEffect(() => {
-    if (connectionStatus === 'open') {
-      toast.success(`Connected to the MBTA API`);
-    }
-  }, [connectionStatus]);
+  }, []);
 
   return (
     <Source id='streaming-source' type='geojson' data={vehicleData}>
