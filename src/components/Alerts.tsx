@@ -1,8 +1,14 @@
 'use server';
 import { getMBTAAlerts } from '@/api/alerts';
+import { AlertCircleIcon, BellRing, TriangleAlertIcon } from 'lucide-react';
 import { use, useEffect, useState } from 'react';
-import { useMap } from 'react-map-gl/mapbox';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  Alert,
+  AlertDescription,
   Badge,
   Button,
   DialogTitle,
@@ -11,6 +17,7 @@ import {
   DrawerDescription,
   DrawerHeader,
   DrawerTrigger,
+  ScrollArea,
   Sheet,
   SheetContent,
   SheetDescription,
@@ -19,30 +26,35 @@ import {
   SheetTrigger,
   Tooltip,
   TooltipContent,
-  TooltipTrigger,
+  TooltipTrigger
 } from './ui';
-import { BellRing } from 'lucide-react';
 
 const alertsPromise = (async () => {
   const alerts = await getMBTAAlerts('5,6,7,8,9,10');
   return alerts;
 })();
 
+//FIXME: fix scrolling on accordions; scrolls full dialog content and not accordion content
 function Alerts() {
-  const { current: map } = useMap();
   const alerts = use(alertsPromise);
   const [isMobile, setIsMobile] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
-    if (navigator.maxTouchPoints > 1) {
+    if (navigator.maxTouchPoints > 1 || window.innerWidth <= 640) {
       setIsMobile(true);
     }
   }, []);
 
+  useEffect(() => {
+    setAlertCount(alerts.data.length);
+  }, [alerts]);
+
   return (
     <>
       {isMobile ? (
-        <Drawer>
+        <Drawer open={open} onOpenChange={setOpen}>
           <Tooltip>
             <TooltipTrigger asChild>
               <DrawerTrigger asChild>
@@ -53,19 +65,42 @@ function Alerts() {
             </TooltipTrigger>
             <TooltipContent>Alerts</TooltipContent>
           </Tooltip>
-          <DrawerContent>
+          <DrawerContent className='h-[640px]'>
             <DrawerHeader>
-              <DialogTitle>
-                <h2 className='text-2xl'>Alerts</h2>
-              </DialogTitle>
-              <DrawerDescription>
-                Active alerts that affect the transit network
-              </DrawerDescription>
+              <DialogTitle className='text-2xl'>Alerts</DialogTitle>
+              <DrawerDescription>Active alerts that affect the transit network</DrawerDescription>
             </DrawerHeader>
+            <ScrollArea className='w-full h-auto px-4 overflow-y-scroll'>
+              <Accordion type='single' collapsible className='w-full'>
+                <AccordionItem value='boston'>
+                  <AccordionTrigger className='font-semibold hover:cursor-pointer'>
+                    <div className='flex flex-row gap-2'>
+                      <p id='accordion-heading-boston'>Boston ({alertCount})</p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className='max-h-[640px] overflow-y-scroll'>
+                    {alerts.data.map((alert, index) => (
+                      <Alert
+                        key={index}
+                        variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
+                        className='mb-2'
+                      >
+                        {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
+                          <TriangleAlertIcon />
+                        ) : (
+                          <AlertCircleIcon />
+                        )}
+                        <AlertDescription>{alert.attributes.header}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </ScrollArea>
           </DrawerContent>
         </Drawer>
       ) : (
-        <Sheet modal={false}>
+        <Sheet open={open} onOpenChange={setOpen} modal={false}>
           <Tooltip>
             <TooltipTrigger asChild>
               <SheetTrigger asChild>
@@ -78,22 +113,45 @@ function Alerts() {
           </Tooltip>
           <SheetContent>
             <SheetHeader>
-              <SheetTitle>
-                <h2 className='text-2xl'>Alerts</h2>
-              </SheetTitle>
-              <SheetDescription>
-                Active alerts that affect the transit network
-              </SheetDescription>
+              <SheetTitle className='text-2xl'>Alerts</SheetTitle>
+              <SheetDescription>Active alerts that affect the transit network</SheetDescription>
             </SheetHeader>
+            <ScrollArea className='w-full h-auto px-4 overflow-y-scroll'>
+              <Accordion type='single' collapsible className='w-full'>
+                <AccordionItem value='boston'>
+                  <AccordionTrigger className='font-semibold hover:cursor-pointer'>
+                    <div className='flex flex-row gap-2'>
+                      <p id='accordion-heading-boston'>Boston ({alertCount})</p>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className='max-h-[640px] overflow-y-scroll'>
+                    {alerts.data.map((alert, index) => (
+                      <Alert
+                        key={index}
+                        variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
+                        className='mb-2'
+                      >
+                        {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
+                          <TriangleAlertIcon />
+                        ) : (
+                          <AlertCircleIcon />
+                        )}
+                        <AlertDescription>{alert.attributes.header}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </ScrollArea>
           </SheetContent>
         </Sheet>
       )}
       {alerts.data.length > 0 ? (
         <Badge
           variant='destructive'
-          className='h-5 w-5 px-1 text-xs rounded-full tabular-nums absolute bottom-6 right-9 z-2'
+          className='h-6 w-6 px-1 text-xs rounded-full tabular-nums absolute bottom-6 right-9 z-2'
         >
-          {alerts.data.length}
+          {alerts.data.length > 99 ? '99+' : alerts.data.length}
         </Badge>
       ) : null}
     </>

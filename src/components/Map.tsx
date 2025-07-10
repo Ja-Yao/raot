@@ -124,7 +124,7 @@ function MBTAMap({ shapes }: Props) {
         if (navigator.geolocation && !isRendered) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              e.target.flyTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15 });
+              e.target.flyTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15, });
               setIsRendered(true); // Set isLoaded to true after initial geolocation
             },
             (error) => {
@@ -137,8 +137,18 @@ function MBTAMap({ shapes }: Props) {
         setIsLoaded(true);
       }}
       onClick={handleIconClick}
+      onMouseEnter={(e) => {
+        if (e.features && e.features.some((f) => f.layer?.id.includes('streaming-layer'))) {
+          e.target.getCanvas().style.cursor = 'pointer';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (e.features && e.features.some((f) => f.layer?.id.includes('streaming-layer'))) {
+          e.target.getCanvas().style.cursor = '';
+        }
+      }}
     >
-      <div className='grid grid-cols-2 gap-2 absolute top-2 right-2 z-1'>
+      <div className='grid grid-cols-2 gap-3 absolute top-4 right-2 z-1'>
         <div className='size-9'>
           <Suspense
             fallback={

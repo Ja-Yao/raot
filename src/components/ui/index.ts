@@ -1,3 +1,5 @@
+export * from './accordion';
+export * from './alert';
 export * from './badge';
 export * from './button';
 export * from './command';
@@ -5,6 +7,7 @@ export * from './dialog';
 export * from './drawer';
 export * from './popover';
 export * from './scroll-area';
+export * from './separator';
 export * from './sheet';
 export * from './skeleton';
 export * from './sonner';

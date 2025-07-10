@@ -36,7 +36,7 @@ function ThemeToggle({ className }: Props) {
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>{theme} theme</TooltipContent>
+        <TooltipContent>Theme</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align='end' className='rounded-xl w-56'>
         <DropdownMenuLabel>Theme</DropdownMenuLabel>
