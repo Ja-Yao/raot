@@ -139,11 +139,11 @@ function MBTAStreamLayer() {
   }, []);
 
   return (
-    <Source id='streaming-source' type='geojson' data={vehicleData}>
+    <Source id='mbta-streaming-source' type='geojson' data={vehicleData}>
       <Layer
-        id='streaming-layer'
+        id='mbta-streaming-layer'
         type='circle'
-        source='streaming-source'
+        source='mbta-streaming-source'
         slot='top'
         paint={{
           'circle-color': [

@@ -6,13 +6,12 @@ interface Props {
 }
 
 function MBTARouteLayer({ shapes }: Props) {
-
   return (
-    <Source id='shape-source' type='geojson' data={shapes}>
+    <Source id='mbta-shape-source' type='geojson' data={shapes}>
       <Layer
         id='shape-layer'
         type='line'
-        source='shape-source'
+        source='mbta-shape-source'
         slot='middle'
         layout={{ 'line-cap': 'round', 'line-join': 'round' }}
         paint={{

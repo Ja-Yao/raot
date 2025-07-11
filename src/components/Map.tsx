@@ -66,7 +66,7 @@ function MBTAMap({ shapes }: Props) {
   const handleIconClick = useCallback((event: MapMouseEvent) => {
     const feature = event.features && event.features[0];
     if (feature) {
-      if (feature.source === 'streaming-source' && feature.layer!.id === 'streaming-layer') {
+      if (feature.source?.includes('streaming-source') && feature.layer!.id.includes('streaming-layer')) {
         // Extract the necessary properties and set state
         let position = feature.properties!.position;
         position = position
@@ -94,7 +94,7 @@ function MBTAMap({ shapes }: Props) {
       mapStyle='mapbox://styles/mapbox/standard'
       initialViewState={viewState}
       projection={`${navigator.maxTouchPoints > 1 ? 'mercator' : 'globe'}`}
-      interactiveLayerIds={['streaming-layer']}
+      interactiveLayerIds={['mbta-streaming-layer']}
       onMove={(e) => setViewState(e.viewState)}
       onRender={(e) => {
         e.target.resize();
@@ -124,7 +124,7 @@ function MBTAMap({ shapes }: Props) {
         if (navigator.geolocation && !isRendered) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              e.target.flyTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15, });
+              e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15, });
               setIsRendered(true); // Set isLoaded to true after initial geolocation
             },
             (error) => {
