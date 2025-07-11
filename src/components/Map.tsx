@@ -47,7 +47,21 @@ function MBTAMap({ shapes }: Props) {
   const [visibleTransitSystems, setVisibleTransitSystems] = useState<SupportedSystems[]>([]);
   const mapRef = useRef(null);
 
+  /**
+   * Checks if a given transit system should be visible based on the current map center.
+   * 
+   * @param event The render event from the {@link https://visgl.github.io/react-map-gl/|react-map-gl} map
+   * @param system Supported transit system to check
+   */
   const checkVisibility = (event: MapEvent, system: SupportedSystems) => {
+    // if the map is too far zoomed out, hide all transit systems
+    if (event.target.getZoom() < 5){
+      if (visibleTransitSystems.includes(system)) {
+        setVisibleTransitSystems((prev) => [...prev].filter((s) => s !== system));
+        return;
+      }
+    }
+
     const mapBounds = event.target.getCenter().toArray();
     const bufferedBBox = turf.buffer(turf.bboxPolygon(turf.bbox(shapes)), 15, { units: 'kilometers' });
     const shapesBBox = turf.bboxPolygon(turf.bbox(bufferedBBox!));
@@ -55,11 +69,11 @@ function MBTAMap({ shapes }: Props) {
     if (turf.booleanPointInPolygon(turf.getCoord(turf.point(mapBounds as number[])), shapesBBox)) {
       if (!visibleTransitSystems.includes(system)) {
         console.debug(`${system} not present in list of visible systems, adding...`);
-        setVisibleTransitSystems((prev) => [...prev, 'MBTA']);
+        setVisibleTransitSystems((prev) => [...prev, system]);
       }
-    } else if (visibleTransitSystems.includes('MBTA')) {
+    } else {
       console.debug("'MBTA' is no longer visible, updating state...");
-      setVisibleTransitSystems((prev) => [...prev].filter((system) => system !== 'MBTA'));
+      setVisibleTransitSystems((prev) => [...prev].filter((s) => s !== system));
     }
   };
 
@@ -124,7 +138,7 @@ function MBTAMap({ shapes }: Props) {
         if (navigator.geolocation && !isRendered) {
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15, });
+              e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15 });
               setIsRendered(true); // Set isLoaded to true after initial geolocation
             },
             (error) => {

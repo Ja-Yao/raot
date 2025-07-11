@@ -44,8 +44,10 @@ function Alerts() {
   useEffect(() => {
     if (navigator.maxTouchPoints > 1 || window.innerWidth <= 640) {
       setIsMobile(true);
+    } else {
+      setIsMobile(false);
     }
-  }, []);
+  });
 
   useEffect(() => {
     setAlertCount(alerts.data.length);
@@ -70,7 +72,7 @@ function Alerts() {
               <DialogTitle className='text-2xl'>Alerts</DialogTitle>
               <DrawerDescription>Active alerts that affect the transit network</DrawerDescription>
             </DrawerHeader>
-            <ScrollArea className='w-full h-auto px-4 overflow-y-scroll'>
+            <div className='w-full h-auto px-4'>
               <Accordion type='single' collapsible className='w-full'>
                 <AccordionItem value='boston'>
                   <AccordionTrigger className='font-semibold hover:cursor-pointer'>
@@ -78,25 +80,27 @@ function Alerts() {
                       <p id='accordion-heading-boston'>Boston ({alertCount})</p>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className='max-h-[640px] overflow-y-scroll'>
-                    {alerts.data.map((alert, index) => (
-                      <Alert
-                        key={index}
-                        variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
-                        className='mb-2'
-                      >
-                        {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
-                          <TriangleAlertIcon />
-                        ) : (
-                          <AlertCircleIcon />
-                        )}
-                        <AlertDescription>{alert.attributes.header}</AlertDescription>
-                      </Alert>
-                    ))}
+                  <AccordionContent>
+                    <ScrollArea className='w-full h-72 pr-3'>
+                      {alerts.data.map((alert, index) => (
+                        <Alert
+                          key={index}
+                          variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
+                          className='mb-2'
+                        >
+                          {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
+                            <TriangleAlertIcon />
+                          ) : (
+                            <AlertCircleIcon />
+                          )}
+                          <AlertDescription>{alert.attributes.header}</AlertDescription>
+                        </Alert>
+                      ))}
+                    </ScrollArea>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </ScrollArea>
+            </div>
           </DrawerContent>
         </Drawer>
       ) : (
@@ -116,7 +120,7 @@ function Alerts() {
               <SheetTitle className='text-2xl'>Alerts</SheetTitle>
               <SheetDescription>Active alerts that affect the transit network</SheetDescription>
             </SheetHeader>
-            <ScrollArea className='w-full h-auto px-4 overflow-y-scroll'>
+            <div className='w-full h-auto px-4'>
               <Accordion type='single' collapsible className='w-full'>
                 <AccordionItem value='boston'>
                   <AccordionTrigger className='font-semibold hover:cursor-pointer'>
@@ -124,25 +128,27 @@ function Alerts() {
                       <p id='accordion-heading-boston'>Boston ({alertCount})</p>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className='max-h-[640px] overflow-y-scroll'>
-                    {alerts.data.map((alert, index) => (
-                      <Alert
-                        key={index}
-                        variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
-                        className='mb-2'
-                      >
-                        {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
-                          <TriangleAlertIcon />
-                        ) : (
-                          <AlertCircleIcon />
-                        )}
-                        <AlertDescription>{alert.attributes.header}</AlertDescription>
-                      </Alert>
-                    ))}
+                  <AccordionContent>
+                    <ScrollArea className='w-full h-[640px] lg:h-[896px] pr-3'>
+                      {alerts.data.map((alert, index) => (
+                        <Alert
+                          key={index}
+                          variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
+                          className='mb-2'
+                        >
+                          {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
+                            <TriangleAlertIcon />
+                          ) : (
+                            <AlertCircleIcon />
+                          )}
+                          <AlertDescription>{alert.attributes.header}</AlertDescription>
+                        </Alert>
+                      ))}
+                    </ScrollArea>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </ScrollArea>
+            </div>
           </SheetContent>
         </Sheet>
       )}
