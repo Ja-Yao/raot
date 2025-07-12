@@ -1,6 +1,6 @@
 'use server';
 import { getMBTAAlerts } from '@/api/alerts';
-import { AlertCircleIcon, BellRing, TriangleAlertIcon } from 'lucide-react';
+import { AlertCircleIcon, BellRing, InfoIcon, TriangleAlertIcon } from 'lucide-react';
 import { use, useEffect, useState } from 'react';
 import {
   Accordion,
@@ -115,7 +115,7 @@ function Alerts() {
             </TooltipTrigger>
             <TooltipContent>Alerts</TooltipContent>
           </Tooltip>
-          <SheetContent>
+          <SheetContent className='lg:max-w-[512px]'>
             <SheetHeader>
               <SheetTitle className='text-2xl'>Alerts</SheetTitle>
               <SheetDescription>Active alerts that affect the transit network</SheetDescription>
@@ -130,13 +130,15 @@ function Alerts() {
                   </AccordionTrigger>
                   <AccordionContent>
                     <ScrollArea className='w-full h-[640px] lg:h-[896px] pr-3'>
-                      {alerts.data.map((alert, index) => (
+                      {alerts.data.sort((a,b) => b.attributes.severity - a.attributes.severity).map((alert, index) => (
                         <Alert
                           key={index}
-                          variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
+                          variant={`${alert.attributes.severity < 7 ? 'info' : alert.attributes.severity < 9 ? 'warning' : 'critical'}`}
                           className='mb-2'
                         >
-                          {alert.attributes.severity > 4 && alert.attributes.severity <= 7 ? (
+                          {alert.attributes.severity < 7 ? (
+                            <InfoIcon />
+                          ) : alert.attributes.severity < 9 ? (
                             <TriangleAlertIcon />
                           ) : (
                             <AlertCircleIcon />
