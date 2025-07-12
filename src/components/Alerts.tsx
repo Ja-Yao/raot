@@ -1,5 +1,5 @@
 'use server';
-import { getMBTAAlerts } from '@/api/alerts';
+import { getMBTAAlerts } from '@/api/mbta/alerts';
 import { AlertCircleIcon, BellRing, InfoIcon, TriangleAlertIcon } from 'lucide-react';
 import { use, useEffect, useState } from 'react';
 import {

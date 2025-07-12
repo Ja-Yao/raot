@@ -1,5 +1,5 @@
-import { getPrediction } from '@/api/predictions';
-import { getStop } from '@/api/stops';
+import { getPrediction } from '@/api/mbta/predictions';
+import { getStop } from '@/api/mbta/stops';
 import { useEffect, useState } from 'react';
 import { Popup } from 'react-map-gl/mapbox';
 import { toast } from 'sonner';
