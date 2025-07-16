@@ -14,7 +14,7 @@ import { Button } from './ui';
 import VehiclePopup from './VehiclePopup';
 const Alerts = lazy(() => import('./Alerts'));
 
-const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
+const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
 const supportedSystems = {
   mbta: 'MBTA',
 } as const;
