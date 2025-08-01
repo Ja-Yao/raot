@@ -14,7 +14,7 @@ import { Button } from './ui';
 import VehiclePopup from './VehiclePopup';
 const Alerts = lazy(() => import('./Alerts'));
 
-const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_KEY;
+const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
 const supportedSystems = {
   mbta: 'MBTA',
 } as const;
@@ -36,7 +36,6 @@ interface PendingVehicleData {
 
 function MBTAMap({ shapes }: Props) {
   const { theme } = useTheme();
-  const [isRendered, setIsRendered] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewState, setViewState] = useState<React.ComponentProps<typeof Map>['initialViewState'] | ViewState>({
     longitude: -95,
@@ -110,6 +109,13 @@ function MBTAMap({ shapes }: Props) {
       projection={`${navigator.maxTouchPoints > 1 ? 'mercator' : 'globe'}`}
       interactiveLayerIds={['mbta-streaming-layer']}
       onMove={(e) => setViewState(e.viewState)}
+      fog={{
+        color: 'rgb(186, 210, 235)', // Lower atmosphere
+        'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
+        'horizon-blend': 0.01, // Atmosphere thickness (default 0.2 at low zooms)
+        'space-color': 'rgb(11, 11, 25)', // Background color
+        'star-intensity': 0.6,
+      }}
       onRender={(e) => {
         e.target.resize();
 
@@ -135,18 +141,18 @@ function MBTAMap({ shapes }: Props) {
         }
 
         // Geolocate on load, but only if not already loaded to prevent multiple calls
-        if (navigator.geolocation && !isRendered) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15 });
-              setIsRendered(true); // Set isLoaded to true after initial geolocation
-            },
-            (error) => {
-              console.error('Error getting location:', error);
-              setIsRendered(true); // Still set loaded even if geolocation fails to prevent infinite loop
-            }
-          );
-        }
+        // if (navigator.geolocation && !isRendered) {
+        //   navigator.geolocation.getCurrentPosition(
+        //     (position) => {
+        //       e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15 });
+        //       setIsRendered(true); // Set isLoaded to true after initial geolocation
+        //     },
+        //     (error) => {
+        //       console.error('Error getting location:', error);
+        //       setIsRendered(true); // Still set loaded even if geolocation fails to prevent infinite loop
+        //     }
+        //   );
+        // }
 
         setIsLoaded(true);
       }}
@@ -166,7 +172,7 @@ function MBTAMap({ shapes }: Props) {
         <div className='size-9'>
           <Suspense
             fallback={
-              <Button disabled variant='secondary' size='icon' className='rounded-xl'>
+              <Button intent='secondary' className='rounded-xl'>
                 <LoaderCircle className='animate-spin' />
               </Button>
             }

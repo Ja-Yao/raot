@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Layer, Source } from 'react-map-gl/mapbox';
 import type { PointCollection } from 'types';
 
-import { MBTA_KEY, ROUTE_TYPES } from '@/api/common';
+import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import { streamingEventToPoint } from '@/helpers/conversions';
 import MBTASSEWorker from '@/workers/mbta-worker?worker';
 import { proxy, wrap, type Remote } from 'comlink';

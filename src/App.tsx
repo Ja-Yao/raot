@@ -2,11 +2,11 @@ import { LoaderCircle } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, use } from 'react';
 import type { LineStringCollection, Shape, Trip } from 'types';
-import { getRoutes } from './api/all-routes';
-import { MBTA_KEY, ROUTE_TYPES } from './api/common';
+import { getRoutes } from '@/api/mbta/routes';
+import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import './App.css';
 import Map from './components/Map';
-import { Toaster } from './components/ui';
+import { Toast } from '@/components/ui';
 import { shapesToFeatureCollection } from './helpers/conversions';
 import { useTheme } from './providers/theme-provider';
 
@@ -89,7 +89,7 @@ function App() {
 
   return (
     <div id='main-container' className='h-full w-full overflow-clip'>
-      <Toaster closeButton richColors theme={theme} position='top-center' duration={2500} />
+      <Toast closeButton richColors theme={theme} position='top-center' duration={2500} />
       <Suspense fallback={<Fallback />}>
         <Map shapes={mbtaShapes} />
       </Suspense>

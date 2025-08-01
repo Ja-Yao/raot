@@ -1,20 +1,11 @@
 import { cn } from '@/lib/utils';
-import { Moon, Sun } from 'lucide-react';
+import { IconMoon as Moon, IconSun as Sun } from '@intentui/icons';
 
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 import { useTheme } from '@/providers/theme-provider';
+import { useEffect } from 'react';
 import { useMap } from 'react-map-gl/mapbox';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui';
-import type { Theme } from 'types';
+import { Tooltip } from './ui';
 
 interface Props {
   className?: string;
@@ -24,60 +15,44 @@ function ThemeToggle({ className }: Props) {
   const { theme, setTheme } = useTheme();
   const { current: map } = useMap();
 
+  const determineTheme = () => {
+    if (theme === 'light') {
+      setTheme('dark');
+      map!.setConfigProperty('basemap', 'lightPreset', 'night');
+    } else {
+      setTheme('light');
+      map!.setConfigProperty('basemap', 'lightPreset', 'day');
+    }
+  }
+
+  useEffect(() => {
+    const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (prefersDarkMode) {
+      setTheme('dark');
+      map!.setConfigProperty('basemap', 'lightPreset', 'night');
+    } else {
+      setTheme('light');
+      map!.setConfigProperty('basemap', 'lightPreset', 'day');
+    }
+  }, []);
+
   return (
-    <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenuTrigger asChild>
-            <Button id='theme-toggle' variant='secondary' size='icon' className={cn('rounded-xl', className)}>
-              <Sun className='h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
-              <Moon className='absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
-              <span className='sr-only'>Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Theme</TooltipContent>
-      </Tooltip>
-      <DropdownMenuContent align='end' className='rounded-xl w-56'>
-        <DropdownMenuLabel>Theme</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={theme} onValueChange={(v) => setTheme(v as Theme)}>
-          <DropdownMenuRadioItem
-            className='rounded-lg'
-            onClick={() => {
-              setTheme('light');
-              map!.setConfigProperty('basemap', 'lightPreset', 'day');
-            }}
-            value='light'
-          >
-            Light
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            className='rounded-lg'
-            onClick={() => {
-              setTheme('dark');
-              map!.setConfigProperty('basemap', 'lightPreset', 'night');
-            }}
-            value='dark'
-          >
-            Dark
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem
-            className='rounded-lg'
-            onClick={() => {
-              setTheme('system');
-              const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-              isDarkMode
-                ? map!.setConfigProperty('basemap', 'lightPreset', 'night')
-                : map!.setConfigProperty('basemap', 'lightPreset', 'day');
-            }}
-            value='system'
-          >
-            System
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Tooltip>
+      <Tooltip.Trigger>
+        <Button
+          id='theme-toggle'
+          intent='secondary'
+          size='sq-md'
+          className={cn('rounded-xl', className)}
+          onClick={determineTheme}
+        >
+          <Sun className='h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />
+          <Moon className='absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0' />
+        </Button>
+      </Tooltip.Trigger>
+      <Tooltip.Content>{theme === 'light' ? 'Turn off the lights' : 'Turn on the lights'}</Tooltip.Content>
+    </Tooltip>
   );
 }
 
