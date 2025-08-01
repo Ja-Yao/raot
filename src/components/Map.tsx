@@ -172,7 +172,7 @@ function MBTAMap({ shapes }: Props) {
         <div className='size-9'>
           <Suspense
             fallback={
-              <Button disabled variant='secondary' size='icon' className='rounded-xl'>
+              <Button intent='secondary' className='rounded-xl'>
                 <LoaderCircle className='animate-spin' />
               </Button>
             }

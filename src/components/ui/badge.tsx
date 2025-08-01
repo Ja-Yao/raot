@@ -1,46 +1,55 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+"use client"
 
-import { cn } from "@/lib/utils"
+import { tv, type VariantProps } from "tailwind-variants"
 
-const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
-  {
-    variants: {
-      variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
-        destructive:
-          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-red-800",
-        outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-      },
+const badgeIntents = {
+  primary: [
+    "[--badge-primary:color-mix(in_oklab,var(--color-primary)_10%,white_90%)] [--badge-primary-fg:color-mix(in_oklab,var(--color-primary)_60%,white_40%)] bg-(--badge-primary)",
+    "dark:bg-primary/15 text-primary dark:text-(--badge-primary-fg) dark:group-hover:bg-primary/25",
+    "group-hover:bg-[color-mix(in_oklab,var(--color-primary)_15%,white_85%)] dark:group-hover:bg-primary/20",
+  ],
+  secondary: [
+    "bg-secondary group-hover:bg-muted dark:bg-secondary dark:group-hover:bg-muted text-secondary-fg",
+  ],
+  success: [
+    "bg-emerald-700 text-emerald-200 group-hover:bg-emerald-500/25",
+  ],
+  info: "bg-sky-700 text-sky-200 group-hover:bg-sky-500/25",
+  warning:
+    "bg-amber-400 text-amber-700 group-hover:bg-amber-400/30",
+  danger:
+    "bg-red-700 text-red-200 group-hover:bg-red-500/25",
+  outline: "inset-ring-border bg-transparent text-fg group-hover:bg-secondary",
+}
+const badgeStyles = tv({
+  base: "inset-ring inset-ring-transparent inline-flex items-center gap-x-1.5 py-0.5 font-medium text-xs/5 **:data-[slot=icon]:size-3 forced-colors:outline",
+  variants: {
+    intent: { ...badgeIntents },
+    isCircle: {
+      true: "rounded-full px-2 font-mono",
+      false: "rounded-sm px-1.5",
     },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
+  },
+  defaultVariants: {
+    intent: "primary",
+    isCircle: true,
+  },
+})
 
-function Badge({
-  className,
-  variant,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span"
+interface BadgeProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof badgeStyles> {
+  className?: string
+  children: React.ReactNode
+}
 
+const Badge = ({ children, intent, isCircle = true, className, ...props }: BadgeProps) => {
   return (
-    <Comp
-      data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
-      {...props}
-    />
+    <span {...props} className={badgeStyles({ intent, isCircle, className })}>
+      {children}
+    </span>
   )
 }
 
-export { Badge, badgeVariants }
+export type { BadgeProps }
+export { Badge, badgeIntents, badgeStyles }
