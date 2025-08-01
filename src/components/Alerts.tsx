@@ -29,7 +29,6 @@ const alertsPromise = (async () => {
   return alerts;
 })();
 
-//FIXME: fix scrolling on accordions; scrolls full dialog content and not accordion content
 function Alerts() {
   const alerts = use(alertsPromise);
   const [isMobile, setIsMobile] = useState(false);
