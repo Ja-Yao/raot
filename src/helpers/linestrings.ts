@@ -1,5 +1,7 @@
+import type { LineStringCollection } from '@/../types';
 import { featureCollection } from '@turf/helpers';
-import type { LineStringCollection } from 'types';
+import { LngLat } from 'mapbox-gl';
+import * as turf from '@turf/turf';
 
 /**
  * Deduplicates any features in a FeatureCollection.
@@ -15,3 +17,13 @@ export const dedupeFeatures = (collection: LineStringCollection): LineStringColl
   ) as LineStringCollection;
   return dedupedFeatures;
 };
+
+/** Computes the center of a line string collection.
+ * 
+ * @param collection - The GeoJSON FeatureCollection to deduplicate.
+ * @returns The center point of the feature collection, represented as a {@link LngLat}
+ */
+export const getCenterOfLineStringCollection = (collection: LineStringCollection): LngLat => {
+  const centroid = turf.center(collection);
+  return new LngLat(centroid.geometry.coordinates[0], centroid.geometry.coordinates[1]);
+}

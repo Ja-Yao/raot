@@ -1,5 +1,5 @@
+import type { WorkerMessageFromWorker } from '@/../types';
 import { expose } from 'comlink';
-import type { WorkerMessageFromWorker } from 'types';
 
 // Define the worker's API that will be exposed
 const workerAPI = {

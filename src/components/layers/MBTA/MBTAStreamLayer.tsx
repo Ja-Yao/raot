@@ -1,21 +1,21 @@
+import type { PointCollection } from '@/../types';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useEffect, useRef, useState } from 'react';
 import { Layer, Source } from 'react-map-gl/mapbox';
-import type { PointCollection } from 'types';
 
+import type {
+    MBTAData,
+    MBTASSEEventData,
+    MBTASSERemoveEvent,
+    MBTASSEUpdateEvent,
+    MBTAWorkerAPI,
+    WorkerMessageFromWorker
+} from '@/../types';
 import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import { streamingEventToPoint } from '@/helpers/conversions';
 import MBTASSEWorker from '@/workers/mbta-worker?worker';
 import { proxy, wrap, type Remote } from 'comlink';
 import { toast } from 'sonner';
-import type {
-  MBTAData,
-  MBTASSEEventData,
-  MBTASSERemoveEvent,
-  MBTASSEUpdateEvent,
-  MBTAWorkerAPI,
-  WorkerMessageFromWorker
-} from 'types';
 
 function MBTAStreamLayer() {
   const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
@@ -174,7 +174,7 @@ function MBTAStreamLayer() {
           },
           'circle-emissive-strength': 1,
         }}
-        minzoom={10}
+        minzoom={11}
       />
     </Source>
   );

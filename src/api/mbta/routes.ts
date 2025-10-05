@@ -1,4 +1,4 @@
-import type { RoutePattern, RoutePatternResponse, RoutePatternsProps, RoutesProps, RoutesResponse } from 'types';
+import type { RoutePattern, RoutePatternResponse, RoutePatternsProps, RoutesProps, RoutesResponse } from '@/../types';
 import { MBTA_KEY } from './common';
 
 /**

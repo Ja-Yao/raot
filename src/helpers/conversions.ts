@@ -1,6 +1,6 @@
+import type { LineStringCollection, MBTASSEEventData, PointFeature, Shape } from '@/../types';
 import { toGeoJSON } from '@mapbox/polyline';
 import { featureCollection, lineString } from '@turf/helpers';
-import type { LineStringCollection, MBTASSEEventData, PointFeature, Shape } from 'types';
 
 
 /**

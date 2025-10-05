@@ -1,5 +1,5 @@
-import type { Prediction } from 'types';
-import { MBTA_KEY } from './common'
+import type { Prediction } from '@/../types';
+import { MBTA_KEY } from './common';
 
 export async function getPrediction(tripId: string, stopId: string, directionId: string): Promise<Prediction> {
   const params = new URLSearchParams()

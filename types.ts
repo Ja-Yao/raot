@@ -7,11 +7,21 @@ export type PointFeature = Feature<Point, GeoJsonProperties>;
 
 export type Theme = 'dark' | 'light' | 'system';
 
-const supportedSystems = {
-  mbta: 'MBTA'
+export const supportedSystems = {
+  mbta: 'Boston',
+  // mta: 'New York',
+  // muni: 'San Francisco',
 } as const;
 
 export type SupportedSystems = (typeof supportedSystems)[keyof typeof supportedSystems]
+
+export type SupportedSystemId = keyof typeof supportedSystems;
+export type SupportedSystemName = (typeof supportedSystems)[SupportedSystemId];
+
+export type TransitOption = {
+  id: SupportedSystemId;
+  name: SupportedSystemName;
+};
 
 export interface ShapesProps {
   pageOffset?: number;

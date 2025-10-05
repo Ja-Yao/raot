@@ -1,5 +1,5 @@
+import type { LineStringCollection } from '@/../types';
 import { Layer, Source } from 'react-map-gl/mapbox';
-import type { LineStringCollection } from 'types';
 
 interface Props {
   shapes: LineStringCollection;

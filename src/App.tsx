@@ -1,12 +1,12 @@
-import { LoaderCircle } from 'lucide-react';
+import type { LineStringCollection, Shape, Trip } from '@/../types';
+import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
+import { getRoutes } from '@/api/mbta/routes';
+import { Toast } from '@/components/ui';
+import { IconLoader } from '@intentui/icons';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, use } from 'react';
-import type { LineStringCollection, Shape, Trip } from 'types';
-import { getRoutes } from '@/api/mbta/routes';
-import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import './App.css';
 import Map from './components/Map';
-import { Toast } from '@/components/ui';
 import { shapesToFeatureCollection } from './helpers/conversions';
 import { useTheme } from './providers/theme-provider';
 
@@ -76,7 +76,7 @@ const Fallback = () => {
   return (
     <div className='w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900'>
       <div className='grow flex flex-col items-center'>
-        <LoaderCircle className='animate-spin h-12 w-12 text-blue-500' />
+        <IconLoader />
         <p className='mt-4 text-gray-700 dark:text-gray-300'>Loading...</p>
       </div>
     </div>

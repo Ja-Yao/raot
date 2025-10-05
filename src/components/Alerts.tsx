@@ -20,8 +20,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
-  Tooltip,
+  Tooltip
 } from './ui';
 
 const alertsPromise = (async () => {
@@ -52,13 +51,11 @@ function Alerts() {
       {isMobile ? (
         <Drawer isOpen={open} onOpenChange={setOpen}>
           <Tooltip>
-            <Tooltip.Trigger>
-              <Drawer.Trigger>
-                <Button intent='secondary' size='sq-md' className='rounded-xl'>
-                  <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
-                </Button>
-              </Drawer.Trigger>
-            </Tooltip.Trigger>
+            <Drawer.Trigger>
+              <Button intent='secondary' size='sq-md' className='rounded-xl'>
+                <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
+              </Button>
+            </Drawer.Trigger>
             <Tooltip.Content>Alerts</Tooltip.Content>
           </Tooltip>
           <Drawer.Content className='h-[640px]'>
@@ -102,13 +99,9 @@ function Alerts() {
       ) : (
         <Sheet isOpen={open} onOpenChange={setOpen}>
           <Tooltip>
-            <Tooltip.Trigger>
-              <SheetTrigger>
-                <Button intent='secondary' size='sq-md' className='rounded-xl'>
-                  <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
-                </Button>
-              </SheetTrigger>
-            </Tooltip.Trigger>
+            <Button onClick={() => setOpen(!open)} intent='secondary' size='sq-md' className='rounded-xl'>
+              <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
+            </Button>
             <Tooltip.Content>Alerts</Tooltip.Content>
           </Tooltip>
           <SheetContent className='lg:max-w-[512px]'>

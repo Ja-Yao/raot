@@ -3,21 +3,23 @@ import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 import type { MapEvent, MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, NavigationControl } from 'react-map-gl/mapbox';
 import ThemeToggle from './ThemeToggle';
-
 import { useTheme } from '@/providers/theme-provider';
 import * as turf from '@turf/turf';
-import { LoaderCircle } from 'lucide-react';
-import type { LineStringCollection, SupportedSystems } from 'types';
+import { supportedSystems, type LineStringCollection, type SupportedSystems } from '../../types';
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
 import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
+import TransitSelector from './TransitSelector';
 import { Button } from './ui';
 import VehiclePopup from './VehiclePopup';
-const Alerts = lazy(() => import('./Alerts'));
+const Alerts = lazy(() => import('./Alerts'));;
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
-const supportedSystems = {
-  mbta: 'MBTA',
-} as const;
+
+// TODO: 
+// - Update shapes to be a collection of linestring collections
+// - rename MBTAMap to Map
+// - define function to get shape centers
+// - pass shape centers to the TransitSelector
 
 interface Props {
   shapes: LineStringCollection;
@@ -67,11 +69,9 @@ function MBTAMap({ shapes }: Props) {
 
     if (turf.booleanPointInPolygon(turf.getCoord(turf.point(mapBounds as number[])), shapesBBox)) {
       if (!visibleTransitSystems.includes(system)) {
-        console.debug(`${system} not present in list of visible systems, adding...`);
         setVisibleTransitSystems((prev) => [...prev, system]);
       }
     } else {
-      console.debug("'MBTA' is no longer visible, updating state...");
       setVisibleTransitSystems((prev) => [...prev].filter((s) => s !== system));
     }
   };
@@ -172,9 +172,7 @@ function MBTAMap({ shapes }: Props) {
         <div className='size-9'>
           <Suspense
             fallback={
-              <Button intent='secondary' className='rounded-xl'>
-                <LoaderCircle className='animate-spin' />
-              </Button>
+              <Button intent='secondary' className='rounded-xl' isPending />
             }
           >
             <Alerts />
@@ -199,7 +197,8 @@ function MBTAMap({ shapes }: Props) {
       />
       {isLoaded && (
         <>
-          {visibleTransitSystems.includes('MBTA') && (
+          <TransitSelector shapes={[shapes]} />
+          {visibleTransitSystems.includes('Boston') && (
             <>
               <MBTARouteLayer shapes={shapes} />
               <MBTAStreamLayer />
