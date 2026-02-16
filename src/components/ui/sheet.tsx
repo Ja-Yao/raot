@@ -1,14 +1,14 @@
-"use client"
+'use client';
 
-import type { DialogProps, DialogTriggerProps, ModalOverlayProps } from "react-aria-components"
+import type { DialogProps, DialogTriggerProps, ModalOverlayProps } from 'react-aria-components';
 import {
   composeRenderProps,
   DialogTrigger as DialogTriggerPrimitive,
   Modal,
-  ModalOverlay,
-} from "react-aria-components"
-import { twJoin } from "tailwind-merge"
-import { tv } from "tailwind-variants"
+  ModalOverlay
+} from 'react-aria-components';
+import { twJoin } from 'tailwind-merge';
+import { tv } from 'tailwind-variants';
 import {
   Dialog,
   DialogBody,
@@ -18,87 +18,86 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "./dialog"
+  DialogTrigger
+} from './dialog';
 
-type Sides = "top" | "bottom" | "left" | "right"
+type Sides = 'top' | 'bottom' | 'left' | 'right';
 const generateCompoundVariants = (sides: Array<Sides>) => {
   return sides.map((side) => ({
     side,
     isFloat: true,
     className:
-      side === "top"
-        ? "top-2 inset-x-2 rounded-lg ring-1 border-b-0"
-        : side === "bottom"
-          ? "bottom-2 inset-x-2 rounded-lg ring-1 border-t-0"
-          : side === "left"
-            ? "left-2 inset-y-2 rounded-lg ring-1 border-r-0"
-            : "right-2 inset-y-2 rounded-lg ring-1 border-l-0",
-  }))
-}
+      side === 'top'
+        ? 'top-2 inset-x-2 rounded-lg ring-1 border-b-0'
+        : side === 'bottom'
+          ? 'bottom-2 inset-x-2 rounded-lg ring-1 border-t-0'
+          : side === 'left'
+            ? 'left-2 inset-y-2 rounded-lg ring-1 border-r-0'
+            : 'right-2 inset-y-2 rounded-lg ring-1 border-l-0'
+  }));
+};
 
 const contentStyles = tv({
-  base: "fixed z-50 grid gap-4 border-muted-fg/20 bg-overlay text-overlay-fg shadow-lg transition ease-in-out dark:border-border",
+  base: 'fixed z-50 grid gap-4 border-muted-fg/20 bg-overlay text-overlay-fg shadow-lg transition ease-in-out dark:border-border',
   variants: {
     isEntering: {
-      true: "fade-in animate-in duration-300",
+      true: 'fade-in animate-in duration-300'
     },
     isExiting: {
-      true: "fade-out animate-out",
+      true: 'fade-out animate-out'
     },
     side: {
-      top: "entering:slide-in-from-top exiting:slide-out-to-top inset-x-0 top-0 rounded-b-2xl border-b",
-      bottom:
-        "entering:slide-in-from-bottom exiting:slide-out-to-bottom inset-x-0 bottom-0 rounded-t-2xl border-t",
-      left: "entering:slide-in-from-left exiting:slide-out-to-left inset-y-0 left-0 h-auto w-3/4 overflow-y-auto border-r sm:max-w-sm",
+      top: 'entering:slide-in-from-top exiting:slide-out-to-top inset-x-0 top-0 rounded-b-2xl border-b',
+      bottom: 'entering:slide-in-from-bottom exiting:slide-out-to-bottom inset-x-0 bottom-0 rounded-t-2xl border-t',
+      left: 'entering:slide-in-from-left exiting:slide-out-to-left inset-y-0 left-0 h-auto w-3/4 overflow-y-auto border-r sm:max-w-sm',
       right:
-        "entering:slide-in-from-right exiting:slide-out-to-right inset-y-0 right-0 h-auto w-3/4 overflow-y-auto border-l sm:max-w-sm",
+        'entering:slide-in-from-right exiting:slide-out-to-right inset-y-0 right-0 h-auto w-3/4 overflow-y-auto border-l sm:max-w-sm'
     },
     isFloat: {
-      false: "border-fg/20 dark:border-border",
-      true: "ring-fg/5 dark:ring-border",
-    },
+      false: 'border-fg/20 dark:border-border',
+      true: 'ring-fg/5 dark:ring-border'
+    }
   },
-  compoundVariants: generateCompoundVariants(["top", "bottom", "left", "right"]),
-})
+  compoundVariants: generateCompoundVariants(['top', 'bottom', 'left', 'right'])
+});
 
-type SheetProps = DialogTriggerProps
+type SheetProps = DialogTriggerProps;
 const Sheet = (props: SheetProps) => {
-  return <DialogTriggerPrimitive {...props} />
-}
+  return <DialogTriggerPrimitive {...props} />;
+};
 
 interface SheetContentProps
-  extends Omit<ModalOverlayProps, "children">,
-    Pick<DialogProps, "aria-label" | "role" | "aria-labelledby" | "children"> {
-  closeButton?: boolean
-  isBlurred?: boolean
-  isFloat?: boolean
-  side?: Sides
-  overlay?: Omit<ModalOverlayProps, "children">
+  extends Omit<ModalOverlayProps, 'children'>,
+    Pick<DialogProps, 'aria-label' | 'role' | 'aria-labelledby' | 'children'> {
+  closeButton?: boolean;
+  isBlurred?: boolean;
+  isFloat?: boolean;
+  side?: Sides;
+  overlay?: Omit<ModalOverlayProps, 'children'>;
 }
 
 const SheetContent = ({
   className,
   isBlurred = false,
   isDismissable: isDismissableInternal,
-  side = "right",
-  role = "dialog",
+  side = 'right',
+  role = 'dialog',
   closeButton = true,
   isFloat = true,
   overlay,
   children,
   ...props
 }: SheetContentProps) => {
-  const isDismissable = isDismissableInternal ?? role !== "alertdialog"
+  const isDismissable = isDismissableInternal ?? role !== 'alertdialog';
   return (
     <ModalOverlay
       isDismissable={isDismissable}
       className={({ isExiting, isEntering }) =>
         twJoin(
-          "fixed inset-0 z-50 h-(--visual-viewport-height,100vh) w-screen overflow-hidden bg-black/15",
-          isEntering && "fade-in animate-in duration-300",
-          isExiting && "fade-out animate-out duration-200",
-          isBlurred && "backdrop-blur-sm backdrop-filter",
+          'fixed inset-0 z-50 h-(--visual-viewport-height,100vh) w-screen overflow-hidden bg-black/15',
+          isEntering && 'fade-in animate-in duration-300',
+          isExiting && 'fade-out animate-out duration-200',
+          isBlurred && 'backdrop-blur-sm backdrop-filter'
         )
       }
       {...props}
@@ -109,51 +108,49 @@ const SheetContent = ({
             ...renderProps,
             side,
             isFloat,
-            className,
-          }),
+            className
+          })
         )}
       >
-        <Dialog aria-label={props["aria-label"]} role={role}>
+        <Dialog aria-label={props['aria-label']} role={role}>
           {(values) => (
             <>
-              {typeof children === "function" ? children(values) : children}
-              {closeButton && (
-                <DialogCloseIcon className="top-2.5 right-2.5" isDismissable={isDismissable} />
-              )}
+              {typeof children === 'function' ? children(values) : children}
+              {closeButton && <DialogCloseIcon className='top-2.5 right-2.5' isDismissable={isDismissable} />}
             </>
           )}
         </Dialog>
       </Modal>
     </ModalOverlay>
-  )
-}
+  );
+};
 
-const SheetTrigger = DialogTrigger
-const SheetFooter = DialogFooter
-const SheetHeader = DialogHeader
-const SheetTitle = DialogTitle
-const SheetDescription = DialogDescription
-const SheetBody = DialogBody
-const SheetClose = DialogClose
+const SheetTrigger = DialogTrigger;
+const SheetFooter = DialogFooter;
+const SheetHeader = DialogHeader;
+const SheetTitle = DialogTitle;
+const SheetDescription = DialogDescription;
+const SheetBody = DialogBody;
+const SheetClose = DialogClose;
 
-Sheet.Trigger = SheetTrigger
-Sheet.Footer = SheetFooter
-Sheet.Header = SheetHeader
-Sheet.Title = SheetTitle
-Sheet.Description = SheetDescription
-Sheet.Body = SheetBody
-Sheet.Close = SheetClose
-Sheet.Content = SheetContent
+Sheet.Trigger = SheetTrigger;
+Sheet.Footer = SheetFooter;
+Sheet.Header = SheetHeader;
+Sheet.Title = SheetTitle;
+Sheet.Description = SheetDescription;
+Sheet.Body = SheetBody;
+Sheet.Close = SheetClose;
+Sheet.Content = SheetContent;
 
-export type { SheetProps, SheetContentProps, Sides }
 export {
   Sheet,
-  SheetTrigger,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
   SheetBody,
   SheetClose,
   SheetContent,
-}
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+};
+export type { SheetContentProps, SheetProps, Sides };

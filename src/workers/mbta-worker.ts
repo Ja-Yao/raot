@@ -7,7 +7,7 @@ const workerAPI = {
   onMessageCallback: null as ((message: WorkerMessageFromWorker) => void) | null,
 
   // Helper function to handle individual SSE events
-  handleSSEEvent: function(event: MessageEvent, eventType: 'reset' | 'add' | 'update' | 'remove') {
+  handleSSEEvent: function (event: MessageEvent, eventType: 'reset' | 'add' | 'update' | 'remove') {
     try {
       const parsedData = JSON.parse(event.data);
       if (this.onMessageCallback) {
@@ -16,13 +16,19 @@ const workerAPI = {
     } catch (error) {
       console.error(`Worker: Error parsing MBTA SSE ${eventType} data:`, error, event.data);
       if (this.onMessageCallback) {
-        this.onMessageCallback({ type: 'error', payload: `Error parsing ${eventType} data: ` + (error as Error).message });
+        this.onMessageCallback({
+          type: 'error',
+          payload: `Error parsing ${eventType} data: ` + (error as Error).message
+        });
       }
     }
   },
 
   // Function to start the SSE stream
-  startStreaming: function(options: { apiKey: string; endpoint: string; filterParams: string }, onMessageCallback: (message: WorkerMessageFromWorker) => void) {
+  startStreaming: function (
+    options: { apiKey: string; endpoint: string; filterParams: string },
+    onMessageCallback: (message: WorkerMessageFromWorker) => void
+  ) {
     if (this.eventSource) {
       this.stopStreaming(); // Stop any existing stream
     }
@@ -71,7 +77,6 @@ const workerAPI = {
       }
     };
 
-
     this.eventSource.onerror = (error) => {
       console.error('Worker: SSE error:', error);
       if (this.onMessageCallback) {
@@ -83,7 +88,7 @@ const workerAPI = {
   },
 
   // Function to stop the SSE stream
-  stopStreaming: function() {
+  stopStreaming: function () {
     if (this.eventSource) {
       console.debug('Worker: Closing existing SSE connection.');
       // Remove all event listeners before closing

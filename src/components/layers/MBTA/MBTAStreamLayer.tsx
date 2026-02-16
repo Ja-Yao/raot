@@ -37,9 +37,9 @@ function MBTAStreamLayer() {
           case 'status':
             // no action required
             if (payload.data === 'connected') {
-              toast.success('Connected to MBTA Stream')
+              toast.success('Connected to MBTA Stream');
             }
-            console.debug(`SSE connection status: ${payload.data}`)
+            console.debug(`SSE connection status: ${payload.data}`);
             break;
           case 'data':
             const { eventType, data: eventData } = payload;
@@ -49,7 +49,7 @@ function MBTAStreamLayer() {
                 const vehicleData = eventData as MBTASSEEventData[];
                 setVehicleData({
                   type: 'FeatureCollection',
-                  features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle)),
+                  features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle))
                 });
                 break;
               case 'add':
@@ -91,8 +91,8 @@ function MBTAStreamLayer() {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-                timeZoneName: 'short',
-              }),
+                timeZoneName: 'short'
+              })
             });
             break;
           default:
@@ -103,8 +103,8 @@ function MBTAStreamLayer() {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-                timeZoneName: 'short',
-              }),
+                timeZoneName: 'short'
+              })
             });
             break;
         }
@@ -163,16 +163,16 @@ function MBTAStreamLayer() {
             '#00843d',
             'Green-E',
             '#00843d',
-            '#FFC72C',
+            '#FFC72C'
           ],
           'circle-stroke-color': 'white',
           'circle-stroke-width': 2,
           'circle-radius': ['case', ['boolean', ['feature-state', 'hover'], false], 20, 7],
           'circle-radius-transition': {
             duration: 0,
-            delay: 0,
+            delay: 0
           },
-          'circle-emissive-strength': 1,
+          'circle-emissive-strength': 1
         }}
         minzoom={10}
       />

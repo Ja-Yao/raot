@@ -10,8 +10,8 @@ export async function getStop(stop_id: string): Promise<Stop> {
   const response = await fetch(`/api/stops/${stop_id}`, {
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': MBTA_KEY,
-    },
+      'X-API-Key': MBTA_KEY
+    }
   });
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);

@@ -16,7 +16,7 @@ const Alerts = lazy(() => import('./Alerts'));
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
 const supportedSystems = {
-  mbta: 'MBTA',
+  mbta: 'MBTA'
 } as const;
 
 interface Props {
@@ -40,7 +40,7 @@ function MBTAMap({ shapes }: Props) {
   const [viewState, setViewState] = useState<React.ComponentProps<typeof Map>['initialViewState'] | ViewState>({
     longitude: -95,
     latitude: 39,
-    zoom: 4,
+    zoom: 4
   });
   const [clickInfo, setClickInfo] = useState<PendingVehicleData | null>(null);
   const [visibleTransitSystems, setVisibleTransitSystems] = useState<SupportedSystems[]>([]);
@@ -48,13 +48,13 @@ function MBTAMap({ shapes }: Props) {
 
   /**
    * Checks if a given transit system should be visible based on the current map center.
-   * 
+   *
    * @param event The render event from the {@link https://visgl.github.io/react-map-gl/|react-map-gl} map
    * @param system Supported transit system to check
    */
   const checkVisibility = (event: MapEvent, system: SupportedSystems) => {
     // if the map is too far zoomed out, hide all transit systems
-    if (event.target.getZoom() < 5){
+    if (event.target.getZoom() < 5) {
       if (visibleTransitSystems.includes(system)) {
         setVisibleTransitSystems((prev) => [...prev].filter((s) => s !== system));
         return;
@@ -94,7 +94,7 @@ function MBTAMap({ shapes }: Props) {
           position: position,
           currentStatus: feature.properties!.currentStatus as string,
           route: feature.properties!.route as string,
-          label: feature.properties!.label as string,
+          label: feature.properties!.label as string
         });
       }
     }
@@ -114,7 +114,7 @@ function MBTAMap({ shapes }: Props) {
         'high-color': 'rgb(36, 92, 223)', // Upper atmosphere
         'horizon-blend': 0.01, // Atmosphere thickness (default 0.2 at low zooms)
         'space-color': 'rgb(11, 11, 25)', // Background color
-        'star-intensity': 0.6,
+        'star-intensity': 0.6
       }}
       onRender={(e) => {
         e.target.resize();
@@ -193,7 +193,7 @@ function MBTAMap({ shapes }: Props) {
         onGeolocate={(pos) => {
           setViewState({
             longitude: pos.coords.longitude,
-            latitude: pos.coords.latitude,
+            latitude: pos.coords.latitude
           });
         }}
       />

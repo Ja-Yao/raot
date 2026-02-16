@@ -1,11 +1,5 @@
 import { cn } from '@/lib/utils';
-import {
-  GridLayout,
-  ListLayout,
-  TableLayout,
-  Virtualizer,
-  WaterfallLayout
-} from 'react-aria-components';
+import { GridLayout, ListLayout, TableLayout, Virtualizer, WaterfallLayout } from 'react-aria-components';
 
 type Layout = typeof ListLayout | typeof GridLayout | typeof WaterfallLayout | typeof TableLayout;
 
@@ -25,7 +19,7 @@ function ScrollArea({ className, layout, children, ...props }: ScrollAreaProps) 
         layoutOptions={{
           estimatedRowHeight: 75,
           gap: 6,
-          padding: 4,
+          padding: 4
         }}
       >
         {children}

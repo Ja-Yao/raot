@@ -11,7 +11,7 @@ const supportedSystems = {
   mbta: 'MBTA'
 } as const;
 
-export type SupportedSystems = (typeof supportedSystems)[keyof typeof supportedSystems]
+export type SupportedSystems = (typeof supportedSystems)[keyof typeof supportedSystems];
 
 export interface ShapesProps {
   pageOffset?: number;
@@ -116,7 +116,7 @@ export type Route = {
         {
           id: string;
           type: string;
-        },
+        }
       ];
     };
   };
@@ -317,7 +317,7 @@ export interface AlertResponse {
             facility: string;
             direction_id: number;
             activities: string[];
-          },
+          }
         ];
         image_alternative_text: string;
         image: string;
@@ -334,7 +334,7 @@ export interface AlertResponse {
           end: string;
         }[];
       };
-    },
+    }
   ];
 }
 
@@ -411,7 +411,7 @@ const StreamStatuses = {
   connecting: 'connecting',
   open: 'open',
   closed: 'closed',
-  error: 'error',
+  error: 'error'
 } as const;
 
 export type StreamStatus = (typeof StreamStatuses)[keyof typeof StreamStatuses];

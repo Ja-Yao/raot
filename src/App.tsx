@@ -1,29 +1,29 @@
+import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
+import { getRoutes } from '@/api/mbta/routes';
+import { Toast } from '@/components/ui';
 import { LoaderCircle } from 'lucide-react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, use } from 'react';
 import type { LineStringCollection, Shape, Trip } from 'types';
-import { getRoutes } from '@/api/mbta/routes';
-import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import './App.css';
 import Map from './components/Map';
-import { Toast } from '@/components/ui';
 import { shapesToFeatureCollection } from './helpers/conversions';
 import { useTheme } from './providers/theme-provider';
-
 
 // Define a helper function to create an empty LineStringCollection
 const createEmptyLineStringCollection = (): LineStringCollection => ({
   type: 'FeatureCollection',
-  features: [],
+  features: []
 });
 
 // Fetch data once outside the component to avoid re-fetching on every render
-const routesPromise = (async (): Promise<LineStringCollection> => { // Explicitly define return type
+const routesPromise = (async (): Promise<LineStringCollection> => {
+  // Explicitly define return type
   try {
     const chainedRoutes = await getRoutes({
       key: MBTA_KEY,
       filterTypes: ROUTE_TYPES,
-      include: 'route_patterns.representative_trip.shape',
+      include: 'route_patterns.representative_trip.shape'
     });
     const parsedRoutes = chainedRoutes.data;
 
@@ -66,7 +66,7 @@ const routesPromise = (async (): Promise<LineStringCollection> => { // Explicitl
       return createEmptyLineStringCollection();
     }
   } catch (error) {
-    console.error("Failed to fetch routes:", error);
+    console.error('Failed to fetch routes:', error);
     // Always return a LineStringCollection in case of error
     return createEmptyLineStringCollection();
   }

@@ -23,7 +23,7 @@ function ThemeToggle({ className }: Props) {
       setTheme('light');
       map!.setConfigProperty('basemap', 'lightPreset', 'day');
     }
-  }
+  };
 
   useEffect(() => {
     const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;

@@ -27,7 +27,7 @@ const fetchStopAndPrediction = async (id: string, trip: string, stop: string, di
   try {
     const [stopResult, predictionResult] = await Promise.allSettled([
       findStop(id),
-      getTripPrediction(trip, stop, direction),
+      getTripPrediction(trip, stop, direction)
     ]);
 
     // Extract the value or reason from each result

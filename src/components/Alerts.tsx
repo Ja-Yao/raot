@@ -21,7 +21,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  Tooltip,
+  Tooltip
 } from './ui';
 
 const alertsPromise = (async () => {

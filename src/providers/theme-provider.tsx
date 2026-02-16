@@ -15,7 +15,7 @@ type ThemeProviderState = {
 
 const initialState: ThemeProviderState = {
   theme: 'system',
-  setTheme: () => null,
+  setTheme: () => null
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -51,7 +51,7 @@ function ThemeProvider({ children, defaultTheme = 'system', storageKey = 'iut', 
         localStorage.setItem(storageKey, theme);
       }
       setTheme(theme);
-    },
+    }
   };
 
   return (

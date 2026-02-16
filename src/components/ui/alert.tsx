@@ -1,5 +1,5 @@
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -13,12 +13,12 @@ const alertVariants = cva(
         warning:
           'text-amber-800 dark:text-amber-500 border-amber-600/50 bg-amber-600/10 dark:bg-amber-700/10 [&>svg]:text-current *:data-[slot=alert-description]:text-current dark:*:data-[slot=alert-description]:text-current/90',
         critical:
-          'text-red-900 dark:text-destructive border-destructive/50 bg-red-500/10 dark:bg-red-950/15 [&>svg]:text-current *:data-[slot=alert-description]:text-current dark:*:data-[slot=alert-description]:text-current/90',
-      },
+          'text-red-900 dark:text-destructive border-destructive/50 bg-red-500/10 dark:bg-red-950/15 [&>svg]:text-current *:data-[slot=alert-description]:text-current dark:*:data-[slot=alert-description]:text-current/90'
+      }
     },
     defaultVariants: {
-      variant: 'default',
-    },
+      variant: 'default'
+    }
   }
 );
 
@@ -44,4 +44,4 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
 );
 AlertDescription.displayName = 'AlertDescription';
 
-export { Alert, AlertTitle, AlertDescription };
+export { Alert, AlertDescription, AlertTitle };
