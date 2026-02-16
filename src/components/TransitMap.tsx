@@ -1,23 +1,23 @@
+import { useTheme } from '@/providers/theme-provider';
+import * as turf from '@turf/turf';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 import type { MapEvent, MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, NavigationControl } from 'react-map-gl/mapbox';
-import ThemeToggle from './ThemeToggle';
-
-import { useTheme } from '@/providers/theme-provider';
-import * as turf from '@turf/turf';
-import { LoaderCircle } from 'lucide-react';
-import type { LineStringCollection, SupportedSystems } from 'types';
+import { supportedSystems, type LineStringCollection, type SupportedSystems } from '../../types';
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
 import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
+import ThemeToggle from './ThemeToggle';
 import { Button } from './ui';
+import { ProgressCircle } from './ui/progress-circle';
 import VehiclePopup from './VehiclePopup';
 const Alerts = lazy(() => import('./Alerts'));
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
-const supportedSystems = {
-  mbta: 'MBTA'
-} as const;
+
+// TODO:
+// - Update shapes to be a collection of linestring collections
+// - rename TransitMap to Map
 
 interface Props {
   shapes: LineStringCollection;
@@ -34,7 +34,7 @@ interface PendingVehicleData {
   label: string;
 }
 
-function MBTAMap({ shapes }: Props) {
+function TransitMap({ shapes }: Props) {
   const { theme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewState, setViewState] = useState<React.ComponentProps<typeof Map>['initialViewState'] | ViewState>({
@@ -173,7 +173,7 @@ function MBTAMap({ shapes }: Props) {
           <Suspense
             fallback={
               <Button intent='secondary' className='rounded-xl'>
-                <LoaderCircle className='animate-spin' />
+                <ProgressCircle aria-label='Loading...' isIndeterminate />
               </Button>
             }
           >
@@ -199,10 +199,10 @@ function MBTAMap({ shapes }: Props) {
       />
       {isLoaded && (
         <>
+          <MBTAStreamLayer />
           {visibleTransitSystems.includes('MBTA') && (
             <>
               <MBTARouteLayer shapes={shapes} />
-              <MBTAStreamLayer />
             </>
           )}
           {clickInfo && <VehiclePopup pendingData={clickInfo} onClose={() => setClickInfo(null)} />}
@@ -212,4 +212,4 @@ function MBTAMap({ shapes }: Props) {
   );
 }
 
-export default MBTAMap;
+export default TransitMap;

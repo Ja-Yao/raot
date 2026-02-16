@@ -1,3 +1,5 @@
+'use client';
+
 import { AnimatePresence, motion } from 'motion/react';
 import { use } from 'react';
 import type {
@@ -26,12 +28,12 @@ const DrawerOverlay = motion.create(ModalOverlay);
 const Drawer = (props: DialogTriggerProps) => <DialogTrigger {...props} />;
 
 interface DrawerContentProps
-  extends Omit<ModalOverlayProps, 'className' | 'children' | 'isDismissable'>,
+  extends
+    Omit<ModalOverlayProps, 'className' | 'children' | 'isDismissable'>,
     Pick<DialogProps, 'aria-label' | 'aria-labelledby' | 'role' | 'children' | 'className'> {
   isFloat?: boolean;
   isBlurred?: boolean;
   className?: string;
-  style?: React.CSSProperties;
   side?: 'top' | 'bottom' | 'left' | 'right';
   notch?: boolean;
 }
@@ -56,7 +58,10 @@ const DrawerContent = ({
           onOpenChange={props?.onOpenChange || state?.setOpen}
           animate={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
           exit={{ backgroundColor: 'rgba(0, 0, 0, 0)' }}
-          className='fixed inset-0 z-50 will-change-auto [--visual-viewport-vertical-padding:32px]'
+          className={twJoin(
+            'fixed inset-0 z-50 will-change-auto [--visual-viewport-vertical-padding:32px]',
+            isBlurred && 'backdrop-blur-[1px] backdrop-filter'
+          )}
         >
           {({ state }) => (
             <DrawerRoot
@@ -66,14 +71,14 @@ const DrawerContent = ({
                 side === 'right' &&
                   [
                     'w-full max-w-xs overflow-y-auto',
-                    '**:[[slot=header]]:text-left',
+                    '**:[[slot=header]]:text-start',
                     isFloat ? 'inset-y-2 right-2 rounded-lg' : 'inset-y-0 right-0 h-auto'
                   ].join(' '),
                 side === 'bottom' && (isFloat ? 'inset-x-2 bottom-2 rounded-lg' : 'inset-x-0 bottom-0 rounded-t-2xl'),
                 side === 'left' &&
                   [
                     'w-full max-w-xs overflow-y-auto',
-                    '**:[[slot=header]]:text-left',
+                    '**:[[slot=header]]:text-start',
                     isFloat ? 'inset-y-2 left-2 rounded-lg' : 'inset-y-0 left-0 h-auto'
                   ].join(' '),
                 className
@@ -89,8 +94,16 @@ const DrawerContent = ({
               }}
               drag={side === 'left' || side === 'right' ? 'x' : 'y'}
               whileDrag={{ cursor: 'grabbing' }}
-              dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-              dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+              dragConstraints={{
+                top: 0,
+                bottom: 0,
+                left: 0,
+                right: 0
+              }}
+              dragTransition={{
+                bounceStiffness: 600,
+                bounceDamping: 20
+              }}
               transition={{ duration: 0.15, ease: 'easeInOut' }}
               onDragEnd={(_, { offset, velocity }) => {
                 if (side === 'bottom' && (velocity.y > 150 || offset.y > screen.height * 0.25)) {
@@ -141,7 +154,7 @@ const DrawerContent = ({
 };
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
-  return <div slot='header' className={twMerge('flex flex-col p-4 text-center sm:text-left', className)} {...props} />;
+  return <div slot='header' className={twMerge('flex flex-col p-4 text-center sm:text-start', className)} {...props} />;
 };
 
 const DrawerTitle = ({ className, ...props }: HeadingProps) => (
@@ -177,14 +190,17 @@ const DrawerClose = ({ className, intent = 'outline', ref, ...props }: ButtonPro
   return <Button slot='close' className={className} ref={ref} intent={intent} {...props} />;
 };
 
-Drawer.Trigger = ButtonPrimitive;
-Drawer.Footer = DrawerFooter;
-Drawer.Header = DrawerHeader;
-Drawer.Title = DrawerTitle;
-Drawer.Description = DrawerDescription;
-Drawer.Body = DrawerBody;
-Drawer.Content = DrawerContent;
-Drawer.Close = DrawerClose;
+const DrawerTrigger = ButtonPrimitive;
 
-export { Drawer };
+export {
+  Drawer,
+  DrawerBody,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger
+};
 export type { DrawerContentProps };

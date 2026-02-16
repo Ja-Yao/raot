@@ -2,7 +2,7 @@
 import { getMBTAAlerts } from '@/api/mbta/alerts';
 import { IconBellAlarm, IconCircleExclamation, IconCircleInfo, IconTriangleExclamation } from '@intentui/icons';
 import { use, useEffect, useState } from 'react';
-import { ListBox, ListBoxItem, ListLayout } from 'react-aria-components';
+import { ListBox, ListBoxItem, TooltipTrigger } from 'react-aria-components';
 import {
   DisclosureGroup as Accordion,
   DisclosurePanel as AccordionContent,
@@ -14,6 +14,11 @@ import {
   Button,
   DialogTitle,
   Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTrigger,
   ScrollArea,
   Sheet,
   SheetContent,
@@ -21,7 +26,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  Tooltip
+  Tooltip,
+  TooltipContent
 } from './ui';
 
 const alertsPromise = (async () => {
@@ -53,21 +59,21 @@ function Alerts() {
       {isMobile ? (
         <Drawer isOpen={open} onOpenChange={setOpen}>
           <Tooltip>
-            <Tooltip.Trigger>
-              <Drawer.Trigger>
+            <TooltipTrigger>
+              <DrawerTrigger>
                 <Button intent='secondary' size='sq-md' className='rounded-xl'>
                   <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
                 </Button>
-              </Drawer.Trigger>
-            </Tooltip.Trigger>
-            <Tooltip.Content>Alerts</Tooltip.Content>
+              </DrawerTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Alerts</TooltipContent>
           </Tooltip>
-          <Drawer.Content className='h-[640px]'>
-            <Drawer.Header>
+          <DrawerContent className='h-[640px]'>
+            <DrawerHeader>
               <DialogTitle className='text-2xl'>Alerts</DialogTitle>
-              <Drawer.Description>Active alerts that affect the transit network</Drawer.Description>
-            </Drawer.Header>
-            <Drawer.Body>
+              <DrawerDescription>Active alerts that affect the transit network</DrawerDescription>
+            </DrawerHeader>
+            <DrawerBody>
               <Accordion className='w-full'>
                 <AccordionItem>
                   <AccordionTrigger className='font-semibold hover:cursor-pointer'>
@@ -76,7 +82,7 @@ function Alerts() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ScrollArea layout={ListLayout} className='w-full h-72 pr-3'>
+                    <ScrollArea orientation='vertical' className='w-full h-72 pr-3'>
                       {alerts.data.map((alert, index) => (
                         <Alert
                           key={index}
@@ -97,20 +103,20 @@ function Alerts() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </Drawer.Body>
-          </Drawer.Content>
+            </DrawerBody>
+          </DrawerContent>
         </Drawer>
       ) : (
         <Sheet isOpen={open} onOpenChange={setOpen}>
           <Tooltip>
-            <Tooltip.Trigger>
+            <TooltipTrigger>
               <SheetTrigger>
                 <Button intent='secondary' size='sq-md' className='rounded-xl'>
                   <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
                 </Button>
               </SheetTrigger>
-            </Tooltip.Trigger>
-            <Tooltip.Content>Alerts</Tooltip.Content>
+            </TooltipTrigger>
+            <TooltipContent>Alerts</TooltipContent>
           </Tooltip>
           <SheetContent className='lg:max-w-[512px]'>
             <SheetHeader>
@@ -125,7 +131,7 @@ function Alerts() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ScrollArea layout={ListLayout} className='w-full h-[640px] lg:max-h-[896px] '>
+                  <ScrollArea orientation='vertical' className='w-full h-[640px] lg:max-h-[896px] '>
                     <ListBox
                       aria-label='Transit alerts'
                       items={alerts.data.sort((a, b) => b.attributes.severity - a.attributes.severity)}
@@ -166,7 +172,7 @@ function Alerts() {
         <Badge
           isCircle
           intent='danger'
-          className='h-6 w-6 justify-center text-xs rounded-full tabular-nums absolute bottom-6 right-9 z-2'
+          className='h-6 w-6 justify-center text-xs rounded-full tabular-nums absolute bottom-6 right-9 z-2 bg-red-700 text-white'
         >
           {alerts.data.length > 99 ? '99+' : alerts.data.length}
         </Badge>

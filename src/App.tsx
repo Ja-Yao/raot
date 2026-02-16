@@ -1,12 +1,12 @@
 import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import { getRoutes } from '@/api/mbta/routes';
 import { Toast } from '@/components/ui';
-import { LoaderCircle } from 'lucide-react';
+import { ProgressCircle } from '@/components/ui/progress-circle';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, use } from 'react';
 import type { LineStringCollection, Shape, Trip } from 'types';
 import './App.css';
-import Map from './components/Map';
+import TransitMap from './components/TransitMap';
 import { shapesToFeatureCollection } from './helpers/conversions';
 import { useTheme } from './providers/theme-provider';
 
@@ -76,7 +76,7 @@ const Fallback = () => {
   return (
     <div className='w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900'>
       <div className='grow flex flex-col items-center'>
-        <LoaderCircle className='animate-spin h-12 w-12 text-blue-500' />
+        <ProgressCircle aria-label='Loading...' isIndeterminate className='size-10' />
         <p className='mt-4 text-gray-700 dark:text-gray-300'>Loading...</p>
       </div>
     </div>
@@ -91,7 +91,7 @@ function App() {
     <div id='main-container' className='h-full w-full overflow-clip'>
       <Toast closeButton richColors theme={theme} position='top-center' duration={2500} />
       <Suspense fallback={<Fallback />}>
-        <Map shapes={mbtaShapes} />
+        <TransitMap shapes={mbtaShapes} />
       </Suspense>
     </div>
   );

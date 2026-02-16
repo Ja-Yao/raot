@@ -1,5 +1,7 @@
-import { IconCheck } from '@intentui/icons';
-import type { ListBoxItemProps, SectionProps, SeparatorProps, TextProps } from 'react-aria-components';
+'use client';
+
+import { CheckIcon } from '@heroicons/react/16/solid';
+import type { ListBoxItemProps, ListBoxSectionProps, SeparatorProps, TextProps } from 'react-aria-components';
 import {
   Collection,
   composeRenderProps,
@@ -9,63 +11,20 @@ import {
   Separator,
   Text
 } from 'react-aria-components';
-import { twMerge } from 'tailwind-merge';
+import { twJoin, twMerge } from 'tailwind-merge';
 import { tv } from 'tailwind-variants';
 import { Keyboard } from './keyboard';
-
-const dropdownItemStyles = tv({
-  base: [
-    '[--mr-icon:--spacing(2)] sm:[--mr-icon:--spacing(1.5)]',
-    'col-span-full grid grid-cols-[auto_1fr_1.5rem_0.5rem_auto] px-3 py-2 supports-[grid-template-columns:subgrid]:grid-cols-subgrid sm:px-2.5 sm:py-1.5',
-    'not-has-[[slot=description]]:items-center has-[[slot=description]]:**:data-[slot=check-indicator]:mt-[1.5px]',
-    'group relative cursor-default select-none rounded-[calc(var(--radius-lg)-1px)] text-base/6 text-fg outline-0 sm:text-sm/6',
-    '**:data-[slot=avatar]:*:mr-1.5 **:data-[slot=avatar]:*:size-6 **:data-[slot=avatar]:mr-(--mr-icon) **:data-[slot=avatar]:size-6 sm:**:data-[slot=avatar]:*:size-5 sm:**:data-[slot=avatar]:size-5',
-    '*:data-[slot=icon]:mr-(--mr-icon) **:data-[slot=icon]:size-5 **:data-[slot=icon]:shrink-0 **:data-[slot=icon]:text-muted-fg sm:**:data-[slot=icon]:size-4',
-    '[&>[slot=label]+[data-slot=icon]]:absolute [&>[slot=label]+[data-slot=icon]]:right-1',
-    'data-danger:text-danger data-danger:**:data-[slot=icon]:text-danger/60',
-    'forced-color-adjust-none forced-colors:text-[CanvasText] forced-colors:**:data-[slot=icon]:text-[CanvasText] forced-colors:group-focus:**:data-[slot=icon]:text-[CanvasText]'
-  ],
-  variants: {
-    isDisabled: {
-      true: 'text-muted-fg forced-colors:text-[GrayText]'
-    },
-    isSelected: {
-      true: '**:data-[slot=avatar]:*:hidden **:data-[slot=avatar]:hidden **:data-[slot=icon]:hidden **:data-[slot=icon]:text-accent-fg'
-    },
-    isDanger: {
-      true: [
-        'text-danger focus:text-danger **:data-[slot=icon]:text-danger/70 focus:**:data-[slot=icon]:text-danger',
-        'focus:*:[[slot=description]]:text-danger/80 focus:*:[[slot=label]]:text-danger',
-        'focus:bg-danger/10 focus:text-danger focus:**:data-[slot=icon]:text-danger forced-colors:focus:text-[Mark]'
-      ]
-    },
-    isFocused: {
-      true: [
-        '**:data-[slot=icon]:text-accent-fg **:[kbd]:text-accent-fg',
-        'bg-accent text-accent-fg forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
-        '[&_.text-muted-fg]:text-accent-fg/80 *:[[slot=description]]:text-accent-fg *:[[slot=label]]:text-accent-fg'
-      ]
-    },
-    isHovered: {
-      true: [
-        '**:data-[slot=icon]:text-accent-fg **:[kbd]:text-accent-fg',
-        'bg-accent text-accent-fg forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
-        '[&_.text-muted-fg]:text-accent-fg/80 *:[[slot=description]]:text-accent-fg *:[[slot=label]]:text-accent-fg'
-      ]
-    }
-  }
-});
 
 const dropdownSectionStyles = tv({
   slots: {
     section: 'col-span-full grid grid-cols-[auto_1fr]',
-    header: 'col-span-full px-3.5 py-2 font-medium text-muted-fg text-sm/6 sm:px-3 sm:py-1.5 sm:text-xs/5'
+    header: 'col-span-full px-3 py-2 font-medium text-muted-fg text-sm/6 sm:px-2.5 sm:py-1.5 sm:text-xs/3'
   }
 });
 
 const { section, header } = dropdownSectionStyles();
 
-interface DropdownSectionProps<T> extends SectionProps<T> {
+interface DropdownSectionProps<T> extends ListBoxSectionProps<T> {
   title?: string;
 }
 
@@ -78,21 +37,93 @@ const DropdownSection = <T extends object>({ className, children, ...props }: Dr
   );
 };
 
-type DropdownItemProps = ListBoxItemProps;
+const dropdownItemStyles = tv({
+  base: [
+    'min-w-0 [--me-icon:--spacing(2.5)] sm:[--me-icon:--spacing(2)]',
+    'col-span-full grid grid-cols-[auto_1fr_1.5rem_0.5rem_auto] px-3 py-2 supports-[grid-template-columns:subgrid]:grid-cols-subgrid sm:px-2.5 sm:py-1.5',
+    'not-has-[[slot=description]]:items-center',
+    'group relative cursor-default select-none rounded-[calc(var(--radius-xl)-(--spacing(1)))] outline-0',
+    // text
+    'text-base/6 text-fg sm:text-sm/6 forced-colors:text-[CanvasText]',
+    // avatar
+    '*:data-[slot=avatar]:*:me-(--me-icon) *:data-[slot=avatar]:me-(--me-icon) has-[[slot=description]]:*:data-[slot=avatar]:row-span-2 *:data-[slot=avatar]:[--avatar-size:--spacing(5)] sm:*:data-[slot=avatar]:[--avatar-size:--spacing(4)]',
+    // icon
+    "*:data-[slot=icon]:col-start-1 *:data-[slot=icon]:row-start-1 *:data-[slot=icon]:-ms-0.5 *:data-[slot=icon]:me-(--me-icon) *:data-[slot=icon]:shrink-0 [&_[data-slot='icon']:not([class*='text-'])]:text-muted-fg",
+    'not-has-[[slot=description]]:*:data-[slot=icon]:size-5 sm:not-has-[[slot=description]]:*:data-[slot=icon]:size-4',
+    "has-[[slot=description]]:*:data-[slot=icon]:h-lh has-[[slot=description]]:[&_[data-slot='icon']:not([class*='w-'])]:w-5 sm:has-[[slot=description]]:[&_[data-slot='icon']:not([class*='w-'])]:w-4",
+    '[&>[slot=label]+[data-slot=icon]]:absolute [&>[slot=label]+[data-slot=icon]]:end-0 [&>[slot=label]+[data-slot=icon]]:top-1',
+    'selected:[&>[data-slot=icon]:has(+[data-slot=icon])]:absolute selected:[&>[data-slot=icon]:has(+[data-slot=icon])]:end-0 selected:[&>[data-slot=icon]:has(+[data-slot=icon])]:top-1',
+    'selected:[&>[data-slot=icon]:has(+[data-slot=avatar])]:absolute selected:[&>[data-slot=icon]:has(+[data-slot=avatar])]:end-0 selected:[&>[data-slot=icon]:has(+[data-slot=avatar])]:top-1',
+    'selected:[&>[data-slot=avatar]+[data-slot=icon]+[slot=label]]:me-6 selected:[&>[data-slot=avatar]+[slot=label]]:me-6 selected:[&>[data-slot=icon]+[data-slot=avatar]+[slot=label]]:me-6 selected:[&>[data-slot=icon]+[slot=label]]:me-6',
+    // keyboard
+    '*:data-[slot=keyboard]:end-3',
+    // force color adjust
+    'forced-color-adjust-none forced-colors:focus:bg-[Highlight] forced-colors:focus:text-[HighlightText] forced-colors:focus:*:data-[slot=icon]:text-[HighlightText]'
+  ],
+  variants: {
+    intent: {
+      danger: [
+        "text-danger-subtle-fg focus:text-danger-subtle-fg [&_[data-slot='icon']:not([class*='text-'])]:text-danger-subtle-fg/70",
+        '*:[[slot=description]]:text-danger-subtle-fg/80 focus:*:[[slot=description]]:text-danger-subtle-fg focus:*:[[slot=label]]:text-danger-subtle-fg',
+        "focus:bg-danger-subtle focus:text-danger-subtle-fg forced-colors:focus:text-[Mark] focus:[&_[data-slot='icon']:not([class*='text-'])]:text-danger-subtle-fg",
+        '*:data-[slot=keyboard]:text-danger-subtle-fg/70 focus:*:data-[slot=keyboard]:text-danger-subtle-fg'
+      ],
+      warning: [
+        "text-warning-subtle-fg focus:text-warning-subtle-fg [&_[data-slot='icon']:not([class*='text-'])]:text-warning-subtle-fg/70",
+        '*:[[slot=description]]:text-warning-subtle-fg/80 focus:*:[[slot=description]]:text-warning-subtle-fg focus:*:[[slot=label]]:text-warning-subtle-fg',
+        "focus:bg-warning-subtle focus:text-warning-subtle-fg focus:[&_[data-slot='icon']:not([class*='text-'])]:text-warning-subtle-fg",
+        '*:data-[slot=keyboard]:text-warning-subtle-fg/70 focus:*:data-[slot=keyboard]:text-warning-subtle-fg'
+      ]
+    },
+    isDisabled: {
+      true: 'opacity-50 forced-colors:text-[GrayText]'
+    },
+    isSelected: {
+      true: "[&_[data-slot='icon']:not([class*='text-'])]:text-accent-fg"
+    },
+    isFocused: {
+      true: [
+        "*:data-[slot=keyboard]:text-accent-fg [&_[data-slot='icon']:not([class*='text-'])]:text-accent-fg",
+        'bg-accent text-accent-fg forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
+        '[&_.text-muted-fg]:text-accent-fg/80 *:[[slot=description]]:text-accent-fg *:[[slot=label]]:text-accent-fg'
+      ]
+    },
+    isHovered: {
+      true: [
+        "*:data-[slot=keyboard]:text-accent-fg [&_[data-slot='icon']:not([class*='text-'])]:text-accent-fg",
+        'bg-accent text-accent-fg forced-colors:bg-[Highlight] forced-colors:text-[HighlightText]',
+        '[&_.text-muted-fg]:text-accent-fg/80 *:[[slot=description]]:text-accent-fg *:[[slot=label]]:text-accent-fg'
+      ]
+    }
+  }
+});
 
-const DropdownItem = ({ className, children, ...props }: DropdownItemProps) => {
+interface DropdownItemProps extends ListBoxItemProps {
+  intent?: 'danger' | 'warning';
+}
+
+const DropdownItem = ({ className, children, intent, ...props }: DropdownItemProps) => {
   const textValue = typeof children === 'string' ? children : undefined;
   return (
     <ListBoxItemPrimitive
       textValue={textValue}
       className={composeRenderProps(className, (className, renderProps) =>
-        dropdownItemStyles({ ...renderProps, className })
+        dropdownItemStyles({ ...renderProps, intent, className })
       )}
       {...props}
     >
       {composeRenderProps(children, (children, { isSelected }) => (
         <>
-          {isSelected && <IconCheck className='-mx-1 mr-1.5' data-slot='check-indicator' />}
+          {isSelected && (
+            <CheckIcon
+              className={twJoin(
+                '-ms-0.5 me-1.5 h-lh w-4 shrink-0',
+                'group-has-data-[slot=icon]:absolute group-has-data-[slot=icon]:end-0.5 group-has-data-[slot=icon]:top-1/2 group-has-data-[slot=icon]:-translate-y-1/2',
+                'group-has-data-[slot=avatar]:absolute group-has-data-[slot=avatar]:end-0.5 group-has-data-[slot=avatar]:top-1/2 group-has-data-[slot=avatar]:-translate-y-1/2'
+              )}
+              data-slot='check-indicator'
+            />
+          )}
           {typeof children === 'string' ? <DropdownLabel>{children}</DropdownLabel> : children}
         </>
       ))}
@@ -100,36 +131,22 @@ const DropdownItem = ({ className, children, ...props }: DropdownItemProps) => {
   );
 };
 
-interface DropdownLabelProps extends TextProps {
-  ref?: React.Ref<HTMLDivElement>;
-}
-
-const DropdownLabel = ({ className, ref, ...props }: DropdownLabelProps) => (
-  <Text slot='label' ref={ref} className={twMerge('col-start-2', className)} {...props} />
+const DropdownLabel = ({ className, ...props }: TextProps) => (
+  <Text slot='label' className={twMerge('col-start-2 [&:has(+[data-slot=icon])]:pe-6', className)} {...props} />
 );
 
-interface DropdownDescriptionProps extends TextProps {
-  ref?: React.Ref<HTMLDivElement>;
-}
-
-const DropdownDescription = ({ className, ref, ...props }: DropdownDescriptionProps) => (
-  <Text slot='description' ref={ref} className={twMerge('col-start-2 text-muted-fg text-sm', className)} {...props} />
+const DropdownDescription = ({ className, ...props }: TextProps) => (
+  <Text slot='description' className={twMerge('col-start-2 font-normal text-muted-fg text-sm', className)} {...props} />
 );
 
-const DropdownSeparator = ({ className, ...props }: SeparatorProps) => (
-  <Separator
-    orientation='horizontal'
-    className={twMerge('-mx-1 col-span-full my-1 h-px bg-fg/10', className)}
-    {...props}
-  />
+const DropdownSeparator = ({ className, ...props }: Omit<SeparatorProps, 'orientation'>) => (
+  <Separator orientation='horizontal' className={twMerge('col-span-full -mx-1 h-px bg-fg/10', className)} {...props} />
 );
 
 const DropdownKeyboard = ({ className, ...props }: React.ComponentProps<typeof Keyboard>) => {
   return (
     <Keyboard
-      classNames={{
-        base: twMerge('absolute right-2 pl-2 group-hover:text-primary-fg group-focus:text-primary-fg', className)
-      }}
+      className={twMerge('absolute end-2 ps-2 group-hover:text-primary-fg group-focus:text-primary-fg', className)}
       {...props}
     />
   );
@@ -149,4 +166,4 @@ export {
   dropdownSectionStyles,
   DropdownSeparator
 };
-export type { DropdownDescriptionProps, DropdownItemProps, DropdownLabelProps, DropdownSectionProps };
+export type { DropdownItemProps, DropdownSectionProps };

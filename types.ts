@@ -7,7 +7,7 @@ export type PointFeature = Feature<Point, GeoJsonProperties>;
 
 export type Theme = 'dark' | 'light' | 'system';
 
-const supportedSystems = {
+export const supportedSystems = {
   mbta: 'MBTA'
 } as const;
 
