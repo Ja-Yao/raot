@@ -39,10 +39,8 @@ const workerAPI = {
     const url = `https://api-v3.mbta.com/${endpoint}/?api_key=${apiKey}${filterParams ? `&${filterParams}` : ''}`;
 
     this.eventSource = new EventSource(url);
-    console.debug('Worker: EventSource created and attempting to connect to:', url);
 
     this.eventSource.onopen = () => {
-      console.debug('Worker: SSE connection opened.');
       if (this.onMessageCallback) {
         this.onMessageCallback({ type: 'status', payload: 'open' });
       }
@@ -90,7 +88,6 @@ const workerAPI = {
   // Function to stop the SSE stream
   stopStreaming: function () {
     if (this.eventSource) {
-      console.debug('Worker: Closing existing SSE connection.');
       // Remove all event listeners before closing
       this.eventSource.removeEventListener('reset', (event) => this.handleSSEEvent(event, 'reset'));
       this.eventSource.removeEventListener('add', (event) => this.handleSSEEvent(event, 'add'));
@@ -101,7 +98,6 @@ const workerAPI = {
       this.eventSource.onopen = null; // Clear open handler
 
       this.eventSource.close();
-      console.debug('Worker: SSE connection closed.');
       if (this.onMessageCallback) {
         this.onMessageCallback({ type: 'status', payload: 'closed' });
       }

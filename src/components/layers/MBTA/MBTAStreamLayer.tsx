@@ -27,7 +27,6 @@ function MBTAStreamLayer() {
       // Wrap the worker with Comlink
       const workerInstance = new MBTASSEWorker();
       workerRef.current = wrap<MBTAWorkerAPI>(workerInstance);
-      console.debug('Main thread: Web Worker initialized with Comlink.');
 
       // Define the callback function to handle messages from the worker
       const handleWorkerMessage = (message: WorkerMessageFromWorker) => {
@@ -39,7 +38,6 @@ function MBTAStreamLayer() {
             if (payload.data === 'connected') {
               toast.success('Connected to MBTA Stream');
             }
-            console.debug(`SSE connection status: ${payload.data}`);
             break;
           case 'data':
             const { eventType, data: eventData } = payload;
@@ -126,7 +124,6 @@ function MBTAStreamLayer() {
     // Cleanup function: Send 'stop' message to worker and terminate it
     return () => {
       if (workerRef.current) {
-        console.debug('Main thread: Sending stop message to worker and terminating.');
         workerRef.current.stopStreaming(); // Call the exposed stop function
         // Comlink handles the termination of the underlying worker instance when the proxy is no longer referenced.
         // However, explicitly terminating the worker can be done if needed, but Comlink usually manages the lifecycle.
@@ -139,12 +136,35 @@ function MBTAStreamLayer() {
   }, []);
 
   return (
-    <Source id='mbta-streaming-source' type='geojson' data={vehicleData}>
+    <Source id='mbta-streaming-source' type='geojson' data={vehicleData} cluster clusterMaxZoom={14} clusterRadius={50}>
       <Layer
-        id='mbta-streaming-layer'
+        id='mbta-streaming-layer_clusters'
+        type='circle'
+        source='mbta-streaming-service'
+        filter={['has', 'point_count']}
+        paint={{
+          'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 100, '#f1f075', 750, '#f28cb1'],
+          'circle-radius': ['step', ['get', 'point_count'], 20, 100, 30, 750, 40],
+          'circle-emissive-strength': 1
+        }}
+      />
+      <Layer
+        id='mbta-streaming-layer_cluster-count'
+        type='symbol'
+        source='mbta-streaming-service'
+        filter={['has', 'point_count']}
+        layout={{
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 12
+        }}
+      />
+      <Layer
+        id='mbta-streaming-layer_unclustered'
         type='circle'
         source='mbta-streaming-source'
         slot='top'
+        filter={['!', ['has', 'point_count']]}
         paint={{
           'circle-color': [
             'match',

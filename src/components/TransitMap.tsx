@@ -1,8 +1,9 @@
 import { useTheme } from '@/providers/theme-provider';
 import * as turf from '@turf/turf';
+import type { GeoJSONSource } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { lazy, Suspense, useCallback, useRef, useState } from 'react';
-import type { MapEvent, MapMouseEvent, ViewState } from 'react-map-gl/mapbox';
+import type { MapEvent, MapMouseEvent, MapRef, ViewState } from 'react-map-gl/mapbox';
 import Map, { GeolocateControl, NavigationControl } from 'react-map-gl/mapbox';
 import { supportedSystems, type LineStringCollection, type SupportedSystems } from '../../types';
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
@@ -44,7 +45,7 @@ function TransitMap({ shapes }: Props) {
   });
   const [clickInfo, setClickInfo] = useState<PendingVehicleData | null>(null);
   const [visibleTransitSystems, setVisibleTransitSystems] = useState<SupportedSystems[]>([]);
-  const mapRef = useRef(null);
+  const mapRef = useRef<MapRef>(null);
 
   /**
    * Checks if a given transit system should be visible based on the current map center.
@@ -67,11 +68,9 @@ function TransitMap({ shapes }: Props) {
 
     if (turf.booleanPointInPolygon(turf.getCoord(turf.point(mapBounds as number[])), shapesBBox)) {
       if (!visibleTransitSystems.includes(system)) {
-        console.debug(`${system} not present in list of visible systems, adding...`);
         setVisibleTransitSystems((prev) => [...prev, system]);
       }
     } else {
-      console.debug("'MBTA' is no longer visible, updating state...");
       setVisibleTransitSystems((prev) => [...prev].filter((s) => s !== system));
     }
   };
@@ -79,7 +78,26 @@ function TransitMap({ shapes }: Props) {
   const handleIconClick = useCallback((event: MapMouseEvent) => {
     const feature = event.features && event.features[0];
     if (feature) {
-      if (feature.source?.includes('streaming-source') && feature.layer!.id.includes('streaming-layer')) {
+      const source = feature.source!;
+      if (feature.layer!.id.includes('clusters')) {
+        const clusterId = feature.properties!.cluster_id;
+
+        const mapboxSource = mapRef.current!.getSource(source) as GeoJSONSource;
+
+        mapboxSource.getClusterExpansionZoom(clusterId, (err, zoom) => {
+          if (err || zoom === null) {
+            return;
+          }
+
+          if (feature.geometry.type === 'Point') {
+            mapRef.current!.flyTo({
+              center: [feature.geometry.coordinates[0], feature.geometry.coordinates[1]],
+              zoom,
+              duration: 500
+            });
+          }
+        });
+      } else if (feature.source?.includes('streaming-source') && feature.layer!.id.includes('unclustered')) {
         // Extract the necessary properties and set state
         let position = feature.properties!.position;
         position = position
@@ -102,12 +120,13 @@ function TransitMap({ shapes }: Props) {
 
   return (
     <Map
+      style={{ zIndex: 0 }}
       ref={mapRef}
       mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
       mapStyle='mapbox://styles/mapbox/standard'
       initialViewState={viewState}
       projection={`${navigator.maxTouchPoints > 1 ? 'mercator' : 'globe'}`}
-      interactiveLayerIds={['mbta-streaming-layer']}
+      interactiveLayerIds={['mbta-streaming-layer_clusters', 'mbta-streaming-layer_unclustered']}
       onMove={(e) => setViewState(e.viewState)}
       fog={{
         color: 'rgb(186, 210, 235)', // Lower atmosphere
@@ -139,20 +158,6 @@ function TransitMap({ shapes }: Props) {
             ? e.target.setConfigProperty('basemap', 'lightPreset', 'night')
             : e.target.setConfigProperty('basemap', 'lightPreset', 'day');
         }
-
-        // Geolocate on load, but only if not already loaded to prevent multiple calls
-        // if (navigator.geolocation && !isRendered) {
-        //   navigator.geolocation.getCurrentPosition(
-        //     (position) => {
-        //       e.target.jumpTo({ center: [position.coords.longitude, position.coords.latitude], zoom: 15 });
-        //       setIsRendered(true); // Set isLoaded to true after initial geolocation
-        //     },
-        //     (error) => {
-        //       console.error('Error getting location:', error);
-        //       setIsRendered(true); // Still set loaded even if geolocation fails to prevent infinite loop
-        //     }
-        //   );
-        // }
 
         setIsLoaded(true);
       }}
@@ -193,7 +198,8 @@ function TransitMap({ shapes }: Props) {
         onGeolocate={(pos) => {
           setViewState({
             longitude: pos.coords.longitude,
-            latitude: pos.coords.latitude
+            latitude: pos.coords.latitude,
+            pitch: 0
           });
         }}
       />
