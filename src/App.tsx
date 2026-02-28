@@ -6,7 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, use } from 'react';
 import type { LineStringCollection, Shape, Trip } from 'types';
 import './App.css';
-import TransitMap from './components/TransitMap';
+import Map from './components/Map';
 import { shapesToFeatureCollection } from './helpers/conversions';
 import { useTheme } from './providers/theme-provider';
 
@@ -91,7 +91,7 @@ function App() {
     <div id='main-container' className='h-full w-full overflow-clip'>
       <Toast closeButton richColors theme={theme} position='top-center' duration={2500} />
       <Suspense fallback={<Fallback />}>
-        <TransitMap shapes={mbtaShapes} />
+        <Map shapes={mbtaShapes} />
       </Suspense>
     </div>
   );

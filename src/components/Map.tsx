@@ -4,7 +4,7 @@ import type { GeoJSONSource } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 import type { MapEvent, MapMouseEvent, MapRef, ViewState } from 'react-map-gl/mapbox';
-import Map, { GeolocateControl, NavigationControl } from 'react-map-gl/mapbox';
+import { GeolocateControl, Map as MapboxMap, NavigationControl } from 'react-map-gl/mapbox';
 import { supportedSystems, type LineStringCollection, type SupportedSystems } from '../../types';
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
 import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
@@ -35,10 +35,10 @@ interface PendingVehicleData {
   label: string;
 }
 
-function TransitMap({ shapes }: Props) {
+function Map({ shapes }: Props) {
   const { theme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
-  const [viewState, setViewState] = useState<React.ComponentProps<typeof Map>['initialViewState'] | ViewState>({
+  const [viewState, setViewState] = useState<React.ComponentProps<typeof MapboxMap>['initialViewState'] | ViewState>({
     longitude: -95,
     latitude: 39,
     zoom: 4
@@ -119,7 +119,7 @@ function TransitMap({ shapes }: Props) {
   }, []);
 
   return (
-    <Map
+    <MapboxMap
       style={{ zIndex: 0 }}
       ref={mapRef}
       mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
@@ -214,8 +214,8 @@ function TransitMap({ shapes }: Props) {
           {clickInfo && <VehiclePopup pendingData={clickInfo} onClose={() => setClickInfo(null)} />}
         </>
       )}
-    </Map>
+    </MapboxMap>
   );
 }
 
-export default TransitMap;
+export default Map;
