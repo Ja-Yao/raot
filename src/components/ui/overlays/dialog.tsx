@@ -3,7 +3,7 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 import type { HeadingProps, TextProps } from 'react-aria-components';
 import { Heading, Button as PrimitiveButton, Dialog as PrimitiveDialog } from 'react-aria-components';
 import { twMerge } from 'tailwind-merge';
-import { Button, type ButtonProps } from './button';
+import { Button, type ButtonProps } from '../buttons/button';
 
 const Dialog = ({ role = 'dialog', className, ...props }: React.ComponentProps<typeof PrimitiveDialog>) => {
   return (
@@ -139,3 +139,4 @@ export type {
   DialogHeaderProps,
   DialogTitleProps
 };
+

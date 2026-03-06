@@ -1,7 +1,7 @@
 import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
 import { getRoutes } from '@/api/mbta/routes';
-import { Toast } from '@/components/ui';
-import { ProgressCircle } from '@/components/ui/progress-circle';
+import { Toast } from '@/components/ui/statuses/toast';
+import { ProgressCircle } from '@/components/ui/statuses/progress-circle';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Suspense, use } from 'react';
 import type { LineStringCollection, Shape, Trip } from 'types';

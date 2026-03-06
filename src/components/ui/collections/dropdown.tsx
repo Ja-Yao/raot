@@ -13,7 +13,7 @@ import {
 } from 'react-aria-components';
 import { twJoin, twMerge } from 'tailwind-merge';
 import { tv } from 'tailwind-variants';
-import { Keyboard } from './keyboard';
+import { Keyboard } from '../controls/keyboard';
 
 const dropdownSectionStyles = tv({
   slots: {
