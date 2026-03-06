@@ -1,16 +1,11 @@
-import { cn } from '@/lib/utils';
 import { IconMoon as Moon, IconSun as Sun } from '@intentui/icons';
 
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/buttons/button';
 import { useTheme } from '@/providers/theme-provider';
 import { useMap } from 'react-map-gl/mapbox';
-import { Tooltip, TooltipContent } from './ui';
+import { Tooltip, TooltipContent } from './ui/overlays/tooltip';
 
-interface Props {
-  className?: string;
-}
-
-function ThemeToggle({ className }: Props) {
+function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const { current: map } = useMap();
 
@@ -30,7 +25,7 @@ function ThemeToggle({ className }: Props) {
         id='theme-toggle'
         intent='secondary'
         size='sq-md'
-        className={cn('rounded-xl', className)}
+        className='rounded-xl'
         onClick={determineTheme}
       >
         <Sun className='h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90' />

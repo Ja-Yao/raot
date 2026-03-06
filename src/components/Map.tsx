@@ -9,8 +9,8 @@ import { supportedSystems, type LineStringCollection, type SupportedSystems } fr
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
 import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
 import ThemeToggle from './ThemeToggle';
-import { Button } from './ui';
-import { ProgressCircle } from './ui/progress-circle';
+import { Button } from './ui/buttons/button';
+import { ProgressCircle } from './ui/statuses/progress-circle';
 import VehiclePopup from './VehiclePopup';
 const Alerts = lazy(() => import('./Alerts'));
 
@@ -18,7 +18,6 @@ const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
 
 // TODO:
 // - Update shapes to be a collection of linestring collections
-// - rename TransitMap to Map
 
 interface Props {
   shapes: LineStringCollection;
@@ -39,9 +38,9 @@ function Map({ shapes }: Props) {
   const { theme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewState, setViewState] = useState<React.ComponentProps<typeof MapboxMap>['initialViewState'] | ViewState>({
-    longitude: -95,
-    latitude: 39,
-    zoom: 4
+    longitude: -71.0565,
+    latitude: 42.3555,
+    zoom: 12
   });
   const [clickInfo, setClickInfo] = useState<PendingVehicleData | null>(null);
   const [visibleTransitSystems, setVisibleTransitSystems] = useState<SupportedSystems[]>([]);
@@ -76,6 +75,7 @@ function Map({ shapes }: Props) {
   };
 
   const handleIconClick = useCallback((event: MapMouseEvent) => {
+    setClickInfo(null);
     const feature = event.features && event.features[0];
     if (feature) {
       const source = feature.source!;
@@ -122,10 +122,10 @@ function Map({ shapes }: Props) {
     <MapboxMap
       style={{ zIndex: 0 }}
       ref={mapRef}
+      localIdeographFontFamily='sans-serif'
       mapboxAccessToken={MAPBOX_ACCESS_TOKEN}
       mapStyle='mapbox://styles/mapbox/standard'
       initialViewState={viewState}
-      projection={`${navigator.maxTouchPoints > 1 ? 'mercator' : 'globe'}`}
       interactiveLayerIds={['mbta-streaming-layer_clusters', 'mbta-streaming-layer_unclustered']}
       onMove={(e) => setViewState(e.viewState)}
       fog={{
@@ -143,22 +143,12 @@ function Map({ shapes }: Props) {
         });
       }}
       onLoad={(e) => {
-        e.target.loadImage('src/assets/navigation-arrow.png', (error, image) => {
-          if (error) throw error;
-          e.target.addImage('nav-arrow', image as HTMLImageElement, { sdf: true });
-        });
-
-        if (theme == 'light') {
-          e.target.setConfigProperty('basemap', 'lightPreset', 'day');
-        } else if (theme == 'dark') {
+        if (theme == 'dark' || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           e.target.setConfigProperty('basemap', 'lightPreset', 'night');
-        } else {
-          const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          isDarkMode
-            ? e.target.setConfigProperty('basemap', 'lightPreset', 'night')
-            : e.target.setConfigProperty('basemap', 'lightPreset', 'day');
+          setIsLoaded(true);
+          return;
         }
-
+        e.target.setConfigProperty('basemap', 'lightPreset', 'day');
         setIsLoaded(true);
       }}
       onClick={handleIconClick}
@@ -173,26 +163,25 @@ function Map({ shapes }: Props) {
         }
       }}
     >
-      <div className='grid grid-cols-2 gap-3 absolute top-4 right-2 z-1'>
-        <div className='size-9'>
-          <Suspense
-            fallback={
-              <Button intent='secondary' className='rounded-xl'>
-                <ProgressCircle aria-label='Loading...' isIndeterminate />
-              </Button>
-            }
-          >
-            <Alerts />
-          </Suspense>
-        </div>
+      <div className='grid grid-cols-2 gap-2 absolute top-4 right-2 z-1'>
+        <Suspense
+          fallback={
+            <Button intent='secondary' className='rounded-xl' size='sq-md'>
+              <ProgressCircle aria-label='Loading...' isIndeterminate />
+            </Button>
+          }
+        >
+          <Alerts />
+        </Suspense>
         <ThemeToggle />
       </div>
       <NavigationControl position='bottom-right' style={{ borderRadius: '0.5rem' }} />
       <GeolocateControl
         positionOptions={{ enableHighAccuracy: true }}
-        trackUserLocation={true}
-        showUserHeading={true}
-        showUserLocation={true}
+        trackUserLocation
+        showUserHeading
+        showUserLocation
+        showAccuracyCircle
         position='bottom-right'
         style={{ borderRadius: '0.5rem' }}
         onGeolocate={(pos) => {
