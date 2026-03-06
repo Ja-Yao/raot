@@ -84,25 +84,35 @@ function MBTAStreamLayer() {
           case 'error':
             console.error('Main thread: Caught error from worker:', message);
             toast.error("Got an error message. If icons aren't showing, refresh the page", {
-              description: new Date().toLocaleDateString(undefined, {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZoneName: 'short'
-              })
+              description: new Date().toLocaleDateString(
+                navigator.languages === undefined ? navigator.language : navigator.languages[0],
+                {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZoneName: 'short'
+                }
+              )
             });
             break;
           default:
             console.warn('Main thread: Unknown message type from worker:', type);
-            toast.warning('Got a strange message from the MBTA', {
-              description: new Date().toLocaleDateString(undefined, {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZoneName: 'short'
-              })
+            toast.warning('Received an unknown message from the MBTA', {
+              description: new Date().toLocaleDateString(
+                navigator.languages === undefined ? navigator.language : navigator.languages[0],
+                {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZoneName: 'short'
+                }
+              )
             });
             break;
         }
@@ -155,7 +165,7 @@ function MBTAStreamLayer() {
         filter={['has', 'point_count']}
         layout={{
           'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+          // 'text-font': ['sans-serif', 'Arial Unicode MS Bold'],
           'text-size': 12
         }}
       />
@@ -183,7 +193,16 @@ function MBTAStreamLayer() {
             '#00843d',
             'Green-E',
             '#00843d',
-            '#FFC72C'
+            'Ferry',
+            '#008EAA',
+            [
+              'case',
+              ['==', ['slice', ['get', 'route'], 0, 3], 'CR-'],
+              '#80276C',
+              ['==', ['slice', ['get', 'route'], 0, 2], 'SL'],
+              '#7C878E',
+              '#FFC72C'
+            ]
           ],
           'circle-stroke-color': 'white',
           'circle-stroke-width': 2,
