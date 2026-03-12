@@ -27,7 +27,6 @@ function MBTAStreamLayer() {
       // Wrap the worker with Comlink
       const workerInstance = new MBTASSEWorker();
       workerRef.current = wrap<MBTAWorkerAPI>(workerInstance);
-      console.debug('Main thread: Web Worker initialized with Comlink.');
 
       // Define the callback function to handle messages from the worker
       const handleWorkerMessage = (message: WorkerMessageFromWorker) => {
@@ -37,9 +36,8 @@ function MBTAStreamLayer() {
           case 'status':
             // no action required
             if (payload.data === 'connected') {
-              toast.success('Connected to MBTA Stream')
+              toast.success('Connected to MBTA Stream');
             }
-            console.debug(`SSE connection status: ${payload.data}`)
             break;
           case 'data':
             const { eventType, data: eventData } = payload;
@@ -49,7 +47,7 @@ function MBTAStreamLayer() {
                 const vehicleData = eventData as MBTASSEEventData[];
                 setVehicleData({
                   type: 'FeatureCollection',
-                  features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle)),
+                  features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle))
                 });
                 break;
               case 'add':
@@ -86,25 +84,35 @@ function MBTAStreamLayer() {
           case 'error':
             console.error('Main thread: Caught error from worker:', message);
             toast.error("Got an error message. If icons aren't showing, refresh the page", {
-              description: new Date().toLocaleDateString(undefined, {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZoneName: 'short',
-              }),
+              description: new Date().toLocaleDateString(
+                navigator.languages === undefined ? navigator.language : navigator.languages[0],
+                {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZoneName: 'short'
+                }
+              )
             });
             break;
           default:
             console.warn('Main thread: Unknown message type from worker:', type);
-            toast.warning('Got a strange message from the MBTA', {
-              description: new Date().toLocaleDateString(undefined, {
-                weekday: 'short',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                timeZoneName: 'short',
-              }),
+            toast.warning('Received an unknown message from the MBTA', {
+              description: new Date().toLocaleDateString(
+                navigator.languages === undefined ? navigator.language : navigator.languages[0],
+                {
+                  weekday: 'short',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  timeZoneName: 'short'
+                }
+              )
             });
             break;
         }
@@ -126,7 +134,6 @@ function MBTAStreamLayer() {
     // Cleanup function: Send 'stop' message to worker and terminate it
     return () => {
       if (workerRef.current) {
-        console.debug('Main thread: Sending stop message to worker and terminating.');
         workerRef.current.stopStreaming(); // Call the exposed stop function
         // Comlink handles the termination of the underlying worker instance when the proxy is no longer referenced.
         // However, explicitly terminating the worker can be done if needed, but Comlink usually manages the lifecycle.
@@ -139,12 +146,35 @@ function MBTAStreamLayer() {
   }, []);
 
   return (
-    <Source id='mbta-streaming-source' type='geojson' data={vehicleData}>
+    <Source id='mbta-streaming-source' type='geojson' data={vehicleData} cluster clusterMaxZoom={14} clusterRadius={50}>
       <Layer
-        id='mbta-streaming-layer'
+        id='mbta-streaming-layer_clusters'
+        type='circle'
+        source='mbta-streaming-service'
+        filter={['has', 'point_count']}
+        paint={{
+          'circle-color': ['step', ['get', 'point_count'], '#51bbd6', 100, '#f1f075', 750, '#f28cb1'],
+          'circle-radius': ['step', ['get', 'point_count'], 20, 100, 30, 750, 40],
+          'circle-emissive-strength': 1
+        }}
+      />
+      <Layer
+        id='mbta-streaming-layer_cluster-count'
+        type='symbol'
+        source='mbta-streaming-service'
+        filter={['has', 'point_count']}
+        layout={{
+          'text-field': ['get', 'point_count_abbreviated'],
+          // 'text-font': ['sans-serif', 'Arial Unicode MS Bold'],
+          'text-size': 12
+        }}
+      />
+      <Layer
+        id='mbta-streaming-layer_unclustered'
         type='circle'
         source='mbta-streaming-source'
         slot='top'
+        filter={['!', ['has', 'point_count']]}
         paint={{
           'circle-color': [
             'match',
@@ -163,16 +193,25 @@ function MBTAStreamLayer() {
             '#00843d',
             'Green-E',
             '#00843d',
-            '#FFC72C',
+            'Ferry',
+            '#008EAA',
+            [
+              'case',
+              ['==', ['slice', ['get', 'route'], 0, 3], 'CR-'],
+              '#80276C',
+              ['==', ['slice', ['get', 'route'], 0, 2], 'SL'],
+              '#7C878E',
+              '#FFC72C'
+            ]
           ],
           'circle-stroke-color': 'white',
           'circle-stroke-width': 2,
           'circle-radius': ['case', ['boolean', ['feature-state', 'hover'], false], 20, 7],
           'circle-radius-transition': {
             duration: 0,
-            delay: 0,
+            delay: 0
           },
-          'circle-emissive-strength': 1,
+          'circle-emissive-strength': 1
         }}
         minzoom={10}
       />

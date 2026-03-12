@@ -17,7 +17,7 @@ function MBTARouteLayer({ shapes }: Props) {
         paint={{
           'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 40, 8],
           'line-color': ['case', ['has', 'color'], ['get', 'color'], 'transparent'],
-          'line-emissive-strength': 0.75,
+          'line-emissive-strength': 0.75
         }}
         minzoom={9}
       />

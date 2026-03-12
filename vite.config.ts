@@ -8,20 +8,20 @@ import { comlink } from 'vite-plugin-comlink';
 export default defineConfig({
   plugins: [comlink(), react(), tailwindcss()],
   worker: {
-    plugins: () => [comlink()],
+    plugins: () => [comlink()]
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+      '@': path.resolve(__dirname, './src')
+    }
   },
   server: {
     proxy: {
       '/api': {
         target: 'https://api-v3.mbta.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
-  },
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
 });

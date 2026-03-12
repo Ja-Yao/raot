@@ -1,9 +1,14 @@
 import { getPrediction } from '@/api/mbta/predictions';
 import { getStop } from '@/api/mbta/stops';
+import { differenceInMinutes } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Popup } from 'react-map-gl/mapbox';
 import { toast } from 'sonner';
-import { Separator } from './ui';
+import type { Prediction } from 'types';
+import { Container } from './ui/layouts/container';
+import { Heading } from './ui/surfaces/heading';
+import { Separator } from './ui/surfaces/separator';
+import { Text } from './ui/surfaces/text';
 
 const findStop = async (id: string) => {
   try {
@@ -27,7 +32,7 @@ const fetchStopAndPrediction = async (id: string, trip: string, stop: string, di
   try {
     const [stopResult, predictionResult] = await Promise.allSettled([
       findStop(id),
-      getTripPrediction(trip, stop, direction),
+      getTripPrediction(trip, stop, direction)
     ]);
 
     // Extract the value or reason from each result
@@ -54,7 +59,7 @@ interface PendingVehicleData {
 
 function VehiclePopup({ pendingData, onClose }: { pendingData: PendingVehicleData; onClose: () => void }) {
   const [stopData, setStopData] = useState<any | null>(null);
-  const [predictionData, setPredictionData] = useState<any | null>(null);
+  const [predictionData, setPredictionData] = useState<Prediction | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any | null>(null);
 
@@ -63,7 +68,7 @@ function VehiclePopup({ pendingData, onClose }: { pendingData: PendingVehicleDat
       setLoading(true);
       setError(null);
       setStopData(null);
-      setPredictionData(null);
+      setPredictionData(undefined);
       try {
         const { stop, prediction } = await fetchStopAndPrediction(
           pendingData.stopId,
@@ -113,7 +118,7 @@ function VehiclePopup({ pendingData, onClose }: { pendingData: PendingVehicleDat
   if (vehicleStatus === 'STOPPED_AT') {
     currentStatus = 'Stopped at';
   } else if (vehicleStatus === 'IN_TRANSIT_TO') {
-    currentStatus = 'In transit';
+    currentStatus = 'Next stop';
   } else if (vehicleStatus === 'INCOMING_AT') {
     currentStatus = 'Arriving at';
   }
@@ -121,37 +126,25 @@ function VehiclePopup({ pendingData, onClose }: { pendingData: PendingVehicleDat
   const stopName = stopData?.name; // Access name directly
   const eta = predictionData?.arrival_time;
 
+  const delta = differenceInMinutes(new Date(eta), Date.now());
+
   return (
     <Popup longitude={pendingData.position[0]} latitude={pendingData.position[1]} onClose={onClose}>
       <div
         id='vehicle-data-container'
         aria-label='Container for clicked vehicle data'
-        className='flex flex-col pb-4 min-w-[196px]'
+        className='flex flex-col p-4'
       >
-        <h4 id='vehicle-route' className='font-bold text-xl'>
+        <Heading level={4} id='vehicle-route' className='font-bold text-xl'>
           <>{/^\d+$/.test(pendingData.route) ? `${pendingData.route} Bus` : pendingData.route}</>
-        </h4>
+        </Heading>
+        <Text className='text-muted-fg'>{pendingData.direction === '0' ? 'Outbound' : 'Inbound'}</Text>
         <Separator className='mt-1' />
-        <div id='vehicle-data-content' className='mt-4 rid grid-rows-4 gap-1'>
-          <div className='grid grid-cols-2'>
-            <span className='font-semibold text-sm'>Direction:</span>
-            <p>{pendingData.direction === '0' ? 'Outbound' : 'Inbound'}</p>
-          </div>
-          <div className='grid grid-cols-2'>
-            <span className='font-semibold text-sm'>Status:</span>
-            <p>{currentStatus}</p>
-          </div>
-          <div className='grid grid-cols-2'>
-            <span className='font-semibold text-sm'>
-              {`${currentStatus === 'Stopped at' ? 'Stop:' : 'Next Stop:'}`}
-            </span>
-            <p>{stopName}</p>
-          </div>
-          <div className='grid grid-cols-2'>
-            <span className='font-semibold text-sm'>ETA:</span>
-            <p>{eta ? new Date(eta).toLocaleTimeString() : 'N/A'}</p>
-          </div>
-        </div>
+        <Container id='vehicle-data-content' className='p-0'>
+          <Text className='text--fg'>
+            {currentStatus} {stopName} {currentStatus !== 'Stopped at' ? `in ${delta} minutes` : ''}
+          </Text>
+        </Container>
       </div>
     </Popup>
   );

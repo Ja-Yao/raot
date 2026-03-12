@@ -1,28 +1,34 @@
 'use server';
 import { getMBTAAlerts } from '@/api/mbta/alerts';
-import { IconBellAlarm, IconCircleExclamation, IconCircleInfo, IconTriangleExclamation } from '@intentui/icons';
-import { use, useEffect, useState } from 'react';
-import { ListBox, ListBoxItem, ListLayout } from 'react-aria-components';
+import { IconBellAlarm } from '@intentui/icons';
+import { use, useEffect, useRef, useState } from 'react';
+
+import { twJoin } from 'tailwind-merge';
+import { Button } from './ui/buttons/button';
+import { ListBox, ListBoxItem } from './ui/collections/list-box';
+import { ScrollArea } from './ui/controls/scroll-area';
+import { Container } from './ui/layouts/container';
 import {
   DisclosureGroup as Accordion,
   DisclosurePanel as AccordionContent,
   Disclosure as AccordionItem,
-  DisclosureTrigger as AccordionTrigger,
-  Alert,
-  AlertDescription,
-  Badge,
-  Button,
-  DialogTitle,
+  DisclosureTrigger as AccordionTrigger
+} from './ui/navigation/disclosure';
+import { DialogTitle } from './ui/overlays/dialog';
+import {
   Drawer,
-  ScrollArea,
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  Tooltip,
-} from './ui';
+  DrawerBody,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTrigger
+} from './ui/overlays/drawer';
+import { PopoverBody, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from './ui/overlays/popover';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/overlays/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/overlays/tooltip';
+import { Note } from './ui/statuses/note';
+import { Text } from './ui/surfaces/text';
+import { Badge } from './ui/statuses/badge';
 
 const alertsPromise = (async () => {
   const alerts = await getMBTAAlerts('5,6,7,8,9,10');
@@ -34,7 +40,10 @@ function Alerts() {
   const alerts = use(alertsPromise);
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [alertCount, setAlertCount] = useState(0);
+
+  const popoverTriggerRef = useRef(null);
 
   useEffect(() => {
     if (navigator.maxTouchPoints > 1 || window.innerWidth <= 640) {
@@ -53,21 +62,21 @@ function Alerts() {
       {isMobile ? (
         <Drawer isOpen={open} onOpenChange={setOpen}>
           <Tooltip>
-            <Tooltip.Trigger>
-              <Drawer.Trigger>
+            <TooltipTrigger>
+              <DrawerTrigger>
                 <Button intent='secondary' size='sq-md' className='rounded-xl'>
                   <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
                 </Button>
-              </Drawer.Trigger>
-            </Tooltip.Trigger>
-            <Tooltip.Content>Alerts</Tooltip.Content>
+              </DrawerTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Alerts</TooltipContent>
           </Tooltip>
-          <Drawer.Content className='h-[640px]'>
-            <Drawer.Header>
+          <DrawerContent className='h-160'>
+            <DrawerHeader>
               <DialogTitle className='text-2xl'>Alerts</DialogTitle>
-              <Drawer.Description>Active alerts that affect the transit network</Drawer.Description>
-            </Drawer.Header>
-            <Drawer.Body>
+              <DrawerDescription>Active alerts that affect the transit network</DrawerDescription>
+            </DrawerHeader>
+            <DrawerBody>
               <Accordion className='w-full'>
                 <AccordionItem>
                   <AccordionTrigger className='font-semibold hover:cursor-pointer'>
@@ -76,101 +85,107 @@ function Alerts() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ScrollArea layout={ListLayout} className='w-full h-72 pr-3'>
+                    <ScrollArea orientation='vertical' className='w-full h-72 pr-3'>
                       {alerts.data.map((alert, index) => (
-                        <Alert
+                        <Note
                           key={index}
-                          variant={`${alert.attributes.severity <= 7 ? 'warning' : 'critical'}`}
+                          intent={`${alert.attributes.severity <= 7 ? 'warning' : 'danger'}`}
                           className='mb-2'
                         >
-                          {alert.attributes.severity < 7 ? (
-                            <IconCircleInfo />
-                          ) : alert.attributes.severity < 9 ? (
-                            <IconTriangleExclamation />
-                          ) : (
-                            <IconCircleExclamation />
-                          )}
-                          <AlertDescription>{alert.attributes.header}</AlertDescription>
-                        </Alert>
+                          {alert.attributes.header}
+                        </Note>
                       ))}
                     </ScrollArea>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </Drawer.Body>
-          </Drawer.Content>
+            </DrawerBody>
+          </DrawerContent>
         </Drawer>
       ) : (
-        <Sheet isOpen={open} onOpenChange={setOpen}>
-          <Tooltip>
-            <Tooltip.Trigger>
-              <SheetTrigger>
-                <Button intent='secondary' size='sq-md' className='rounded-xl'>
-                  <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
-                </Button>
-              </SheetTrigger>
-            </Tooltip.Trigger>
-            <Tooltip.Content>Alerts</Tooltip.Content>
-          </Tooltip>
-          <SheetContent className='lg:max-w-[512px]'>
-            <SheetHeader>
-              <SheetTitle className='text-2xl'>Alerts</SheetTitle>
-              <SheetDescription>Active alerts that affect the transit network</SheetDescription>
-            </SheetHeader>
-            <div className='w-full h-auto px-8'>
-              <AccordionItem>
-                <AccordionTrigger className='font-semibold hover:cursor-pointer'>
-                  <div className='flex flex-row gap-2'>
-                    <p id='accordion-heading-boston'>Boston ({alertCount})</p>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ScrollArea layout={ListLayout} className='w-full h-[640px] lg:max-h-[896px] '>
-                    <ListBox
-                      aria-label='Transit alerts'
-                      items={alerts.data.sort((a, b) => b.attributes.severity - a.attributes.severity)}
-                      selectionMode='none'
-                    >
-                      {(item) => (
-                        <ListBoxItem>
-                          <Alert
-                            variant={
-                              item.attributes.severity < 7
-                                ? 'info'
-                                : item.attributes.severity < 9
-                                  ? 'warning'
-                                  : 'critical'
-                            }
-                            className='mb-2'
-                          >
-                            {item.attributes.severity < 7 ? (
-                              <IconCircleInfo />
-                            ) : item.attributes.severity < 9 ? (
-                              <IconTriangleExclamation />
-                            ) : (
-                              <IconCircleExclamation />
-                            )}
-                            <AlertDescription>{item.attributes.header}</AlertDescription>
-                          </Alert>
-                        </ListBoxItem>
-                      )}
-                    </ListBox>
-                  </ScrollArea>
-                </AccordionContent>
-              </AccordionItem>
-            </div>
-          </SheetContent>
-        </Sheet>
+        <>
+          <Container className='relative inline-block p-0'>
+            <Button
+              ref={popoverTriggerRef}
+              intent='secondary'
+              size='sq-md'
+              className='rounded-xl'
+              onClick={() => setIsPopoverOpen(true)}
+            >
+              <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
+            </Button>
+            {alerts.data.length > 0 ? (
+              <Badge
+                isCircle
+                intent='danger'
+                className={twJoin(
+                  'absolute bottom-6 left-6 z-2 inline-flex',
+                  'h-4 text-xs rounded-full tabular-nums',
+                  'bg-red-700 text-white'
+                )}
+              />
+            ) : null}
+          </Container>
+          <PopoverContent
+            triggerRef={popoverTriggerRef}
+            isOpen={isPopoverOpen}
+            onOpenChange={setIsPopoverOpen}
+            arrow
+            className='width-full min-w-96'
+          >
+            <PopoverHeader>
+              <div className='flex justify-between'>
+                <PopoverTitle>Alerts</PopoverTitle>
+              </div>
+              <PopoverDescription>Some Description</PopoverDescription>
+            </PopoverHeader>
+            <PopoverBody></PopoverBody>
+          </PopoverContent>
+          <Sheet isOpen={open} onOpenChange={setOpen}>
+            <SheetContent className='lg:max-w-lg'>
+              <SheetHeader>
+                <SheetTitle className='text-2xl'>Alerts</SheetTitle>
+                <SheetDescription>Active alerts that affect the transit network</SheetDescription>
+              </SheetHeader>
+              <Container className='w-full h-auto px-8'>
+                <AccordionItem>
+                  <AccordionTrigger className='font-semibold hover:cursor-pointer'>
+                    <div className='flex flex-row gap-2'>
+                      <Text id='accordion-heading-boston'>Boston ({alertCount})</Text>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ScrollArea orientation='vertical' className='w-full h-160 lg:max-h-224 '>
+                      <ListBox
+                        aria-label='Transit alerts'
+                        items={alerts.data.sort((a, b) => b.attributes.severity - a.attributes.severity)}
+                        selectionMode='none'
+                      >
+                        {(item) => (
+                          <ListBoxItem>
+                            <Note
+                              intent={
+                                item.attributes.severity < 7
+                                  ? 'info'
+                                  : item.attributes.severity < 9
+                                    ? 'warning'
+                                    : 'danger'
+                              }
+                              className='mb-2'
+                            >
+                              {item.attributes.header}
+                            </Note>
+                          </ListBoxItem>
+                        )}
+                      </ListBox>
+                    </ScrollArea>
+                  </AccordionContent>
+                </AccordionItem>
+              </Container>
+            </SheetContent>
+          </Sheet>
+        </>
       )}
-      {alerts.data.length > 0 ? (
-        <Badge
-          isCircle
-          intent='danger'
-          className='h-6 w-6 justify-center text-xs rounded-full tabular-nums absolute bottom-6 right-9 z-2'
-        >
-          {alerts.data.length > 99 ? '99+' : alerts.data.length}
-        </Badge>
-      ) : null}
     </>
   );
 }

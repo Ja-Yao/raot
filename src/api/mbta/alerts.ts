@@ -26,8 +26,8 @@ export async function getMBTAAlerts(
   const response = await fetch(`/api/alerts?${params}`, {
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': MBTA_KEY,
-    },
+      'X-API-Key': MBTA_KEY
+    }
   });
 
   if (!response.ok) {
