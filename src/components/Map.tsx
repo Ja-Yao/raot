@@ -1,4 +1,3 @@
-import { useTheme } from '@/providers/theme-provider';
 import * as turf from '@turf/turf';
 import type { GeoJSONSource } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -8,11 +7,11 @@ import { GeolocateControl, Map as MapboxMap, NavigationControl } from 'react-map
 import { supportedSystems, type LineStringCollection, type SupportedSystems } from '../../types';
 import MBTARouteLayer from './layers/MBTA/MBTARouteLayer';
 import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
-import ThemeToggle from './ThemeToggle';
 import { Button } from './ui/buttons/button';
-import { ProgressCircle } from './ui/statuses/progress-circle';
+import { Loader } from './ui/statuses/loader';
 import VehiclePopup from './VehiclePopup';
-const Alerts = lazy(() => import('./Alerts'));
+import Alerts from './Alerts';
+// const Alerts = lazy(() => import('./Alerts'));
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
 
@@ -35,7 +34,6 @@ interface PendingVehicleData {
 }
 
 function Map({ shapes }: Props) {
-  const { theme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
   const [viewState, setViewState] = useState<React.ComponentProps<typeof MapboxMap>['initialViewState'] | ViewState>({
     longitude: -71.0565,
@@ -142,13 +140,7 @@ function Map({ shapes }: Props) {
           checkVisibility(e, system);
         });
       }}
-      onLoad={(e) => {
-        if (theme == 'dark' || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          e.target.setConfigProperty('basemap', 'lightPreset', 'night');
-          setIsLoaded(true);
-          return;
-        }
-        e.target.setConfigProperty('basemap', 'lightPreset', 'day');
+      onLoad={() => {
         setIsLoaded(true);
       }}
       onClick={handleIconClick}
@@ -163,17 +155,16 @@ function Map({ shapes }: Props) {
         }
       }}
     >
-      <div className='grid grid-cols-2 gap-2 absolute top-4 right-2 z-1'>
+      <div className='flex flex-1 absolute top-4 right-4 z-1'>
         <Suspense
           fallback={
             <Button intent='secondary' className='rounded-xl' size='sq-md'>
-              <ProgressCircle aria-label='Loading...' isIndeterminate />
+              <Loader aria-label='Loading...' />
             </Button>
           }
         >
           <Alerts />
         </Suspense>
-        <ThemeToggle />
       </div>
       <NavigationControl position='bottom-right' style={{ borderRadius: '0.5rem' }} />
       <GeolocateControl
@@ -194,12 +185,12 @@ function Map({ shapes }: Props) {
       />
       {isLoaded && (
         <>
-          <MBTAStreamLayer />
           {visibleTransitSystems.includes('MBTA') && (
             <>
               <MBTARouteLayer shapes={shapes} />
             </>
           )}
+          <MBTAStreamLayer />
           {clickInfo && <VehiclePopup pendingData={clickInfo} onClose={() => setClickInfo(null)} />}
         </>
       )}

@@ -138,18 +138,23 @@ function Alerts() {
               <PopoverDescription>Warnings and information about the network</PopoverDescription>
             </PopoverHeader>
             <PopoverBody className='md:max-h-128 lg:max-h-196'>
-              <ScrollArea orientation='vertical'>
-                {alerts.slice(0, 5).map((alert) => (
-                  <Note
-                    intent={
-                      alert.attributes.severity < 7 ? 'info' : alert.attributes.severity < 9 ? 'warning' : 'danger'
-                    }
-                    className='mb-2'
-                  >
-                    {alert.attributes.header}
-                  </Note>
-                ))}
-              </ScrollArea>
+              {!alerts.length ? (
+                <Text>No alerts</Text>
+              ) : (
+                <ScrollArea orientation='vertical'>
+                  {alerts.slice(0, 5).map((alert) => (
+                    <Note
+                      key={crypto.randomUUID()}
+                      intent={
+                        alert.attributes.severity < 7 ? 'info' : alert.attributes.severity < 9 ? 'warning' : 'danger'
+                      }
+                      className='mb-2'
+                    >
+                      {alert.attributes.header}
+                    </Note>
+                  ))}
+                </ScrollArea>
+              )}
             </PopoverBody>
             <PopoverFooter>
               <Button
@@ -158,7 +163,7 @@ function Alerts() {
                   setOpen(true);
                 }}
               >
-                View all
+                View all ({alerts.length})
               </Button>
             </PopoverFooter>
           </PopoverContent>
@@ -179,6 +184,7 @@ function Alerts() {
                     <ScrollArea orientation='vertical' className='*:max-h-196'>
                       {alerts.map((alert) => (
                         <Note
+                          key={crypto.randomUUID()}
                           intent={
                             alert.attributes.severity < 7
                               ? 'info'
