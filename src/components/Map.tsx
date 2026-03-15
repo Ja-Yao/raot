@@ -10,8 +10,7 @@ import MBTAStreamLayer from './layers/MBTA/MBTAStreamLayer';
 import { Button } from './ui/buttons/button';
 import { Loader } from './ui/statuses/loader';
 import VehiclePopup from './VehiclePopup';
-import Alerts from './Alerts';
-// const Alerts = lazy(() => import('./Alerts'));
+const Alerts = lazy(() => import('./Alerts'));
 
 const MAPBOX_ACCESS_TOKEN = import.meta.env.VITE_MAPBOX_API_KEY;
 
