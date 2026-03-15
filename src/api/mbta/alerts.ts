@@ -1,4 +1,4 @@
-import type { AlertResponse } from 'types';
+import type { AlertResponse } from './types';
 import { MBTA_KEY, ROUTE_TYPES } from './common';
 
 /**

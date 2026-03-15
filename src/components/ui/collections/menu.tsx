@@ -19,16 +19,15 @@ import {
   SubmenuTrigger as SubmenuTriggerPrimitive
 } from 'react-aria-components';
 import { twMerge } from 'tailwind-merge';
-import { tv, type VariantProps } from 'tailwind-variants';
+import { type VariantProps } from 'tailwind-variants';
+import { PopoverContent, type PopoverContentProps } from '../overlays/popover';
+import { dropdownItemStyles, dropdownSectionStyles, menuContentStyles } from '../styles';
 import {
   DropdownDescription,
-  dropdownItemStyles,
   DropdownKeyboard,
   DropdownLabel,
-  dropdownSectionStyles,
   DropdownSeparator
 } from './dropdown';
-import { PopoverContent, type PopoverContentProps } from './popover';
 
 const Menu = (props: MenuTriggerPrimitiveProps) => <MenuTriggerPrimitive {...props} />;
 
@@ -71,10 +70,6 @@ interface MenuContentProps<T> extends MenuPrimitiveProps<T>, Pick<PopoverContent
     | 'shouldFlip'
   >;
 }
-
-const menuContentStyles = tv({
-  base: "grid max-h-[inherit] grid-cols-[auto_1fr] gap-y-1 overflow-y-auto overflow-x-hidden overscroll-contain p-1 outline-hidden [clip-path:inset(0_0_0_0_round_calc(var(--radius-xl)-(--spacing(1))))] [&>[data-slot=menu-section]+[data-slot=menu-section]:not([class*='mt-']):not([class*='my-'])]:mt-3"
-});
 
 const MenuContent = <T extends object>({ className, placement, popover, ...props }: MenuContentProps<T>) => {
   return (
@@ -165,7 +160,6 @@ const MenuDescription = DropdownDescription;
 export {
   Menu,
   MenuContent,
-  menuContentStyles,
   MenuDescription,
   MenuHeader,
   MenuItem,
@@ -177,3 +171,4 @@ export {
   MenuTrigger
 };
 export type { MenuContentProps, MenuItemProps, MenuSectionProps, MenuTriggerProps };
+

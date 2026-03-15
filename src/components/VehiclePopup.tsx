@@ -1,10 +1,10 @@
 import { getPrediction } from '@/api/mbta/predictions';
 import { getStop } from '@/api/mbta/stops';
+import type { Prediction, Stop } from '@/api/mbta/types';
 import { differenceInMinutes } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Popup } from 'react-map-gl/mapbox';
 import { toast } from 'sonner';
-import type { Prediction } from 'types';
 import { Container } from './ui/layouts/container';
 import { Heading } from './ui/surfaces/heading';
 import { Separator } from './ui/surfaces/separator';
@@ -58,16 +58,16 @@ interface PendingVehicleData {
 }
 
 function VehiclePopup({ pendingData, onClose }: { pendingData: PendingVehicleData; onClose: () => void }) {
-  const [stopData, setStopData] = useState<any | null>(null);
+  const [stopData, setStopData] = useState<Stop | undefined>(undefined);
   const [predictionData, setPredictionData] = useState<Prediction | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any | null>(null);
+  const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      setStopData(null);
+      setStopData(undefined);
       setPredictionData(undefined);
       try {
         const { stop, prediction } = await fetchStopAndPrediction(
@@ -130,11 +130,7 @@ function VehiclePopup({ pendingData, onClose }: { pendingData: PendingVehicleDat
 
   return (
     <Popup longitude={pendingData.position[0]} latitude={pendingData.position[1]} onClose={onClose}>
-      <div
-        id='vehicle-data-container'
-        aria-label='Container for clicked vehicle data'
-        className='flex flex-col p-4'
-      >
+      <div id='vehicle-data-container' aria-label='Container for clicked vehicle data' className='flex flex-col p-4'>
         <Heading level={4} id='vehicle-route' className='font-bold text-xl'>
           <>{/^\d+$/.test(pendingData.route) ? `${pendingData.route} Bus` : pendingData.route}</>
         </Heading>

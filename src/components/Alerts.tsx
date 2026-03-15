@@ -26,9 +26,9 @@ import {
 import { PopoverBody, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from './ui/overlays/popover';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/overlays/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/overlays/tooltip';
+import { Badge } from './ui/statuses/badge';
 import { Note } from './ui/statuses/note';
 import { Text } from './ui/surfaces/text';
-import { Badge } from './ui/statuses/badge';
 
 const alertsPromise = (async () => {
   const alerts = await getMBTAAlerts('5,6,7,8,9,10');
@@ -51,7 +51,7 @@ function Alerts() {
     } else {
       setIsMobile(false);
     }
-  });
+  }, []);
 
   useEffect(() => {
     setAlertCount(alerts.data.length);

@@ -4,18 +4,19 @@ import { Layer, Source } from 'react-map-gl/mapbox';
 import type { PointCollection } from 'types';
 
 import { MBTA_KEY, ROUTE_TYPES } from '@/api/mbta/common';
-import { streamingEventToPoint } from '@/helpers/conversions';
-import MBTASSEWorker from '@/workers/mbta-worker?worker';
-import { proxy, wrap, type Remote } from 'comlink';
-import { toast } from 'sonner';
 import type {
   MBTAData,
   MBTASSEEventData,
+  MBTASSEEventPayload,
   MBTASSERemoveEvent,
   MBTASSEUpdateEvent,
   MBTAWorkerAPI,
   WorkerMessageFromWorker
-} from 'types';
+} from '@/api/mbta/types';
+import { streamingEventToPoint } from '@/helpers/conversions';
+import MBTASSEWorker from '@/workers/mbta-worker?worker';
+import { proxy, wrap, type Remote } from 'comlink';
+import { toast } from 'sonner';
 
 function MBTAStreamLayer() {
   const [vehicleData, setVehicleData] = useState<PointCollection>({ type: 'FeatureCollection', features: [] });
@@ -33,16 +34,20 @@ function MBTAStreamLayer() {
         const { type, payload } = message;
 
         switch (type) {
-          case 'status':
+          case 'status': {
             // no action required
-            if (payload.data === 'connected') {
+            if (payload instanceof String && payload === 'connected') {
               toast.success('Connected to MBTA Stream');
             }
             break;
-          case 'data':
-            const { eventType, data: eventData } = payload;
+          }
+          case 'data': {
+            if (payload instanceof String) {
+              throw new Error('Unknown data received');
+            }
+            const { eventType, data: eventData } = payload as MBTASSEEventPayload;
             switch (eventType) {
-              case 'reset':
+              case 'reset': {
                 // contains the full current state of the endpoint. This is always the first event in the SSE stream.
                 const vehicleData = eventData as MBTASSEEventData[];
                 setVehicleData({
@@ -50,7 +55,8 @@ function MBTAStreamLayer() {
                   features: vehicleData.map((vehicle) => streamingEventToPoint(vehicle))
                 });
                 break;
-              case 'add':
+              }
+              case 'add': {
                 // contains data for a new vehicle added to the stream
                 const addedItem = eventData as MBTAData;
                 setVehicleData((prevData) => {
@@ -58,7 +64,8 @@ function MBTAStreamLayer() {
                   return { ...prevData, features: newFeatures } as PointCollection;
                 });
                 break;
-              case 'update':
+              }
+              case 'update': {
                 // contains data for an existing vehicle updated in the stream
                 const updatedItem = streamingEventToPoint(eventData as MBTASSEUpdateEvent['data']);
                 setVehicleData((prevData) => {
@@ -68,7 +75,8 @@ function MBTAStreamLayer() {
                   return { ...prevData, features: newFeatures };
                 });
                 break;
-              case 'remove':
+              }
+              case 'remove': {
                 // contains data for a vehicle removed from the stream
                 const removedItem = eventData as MBTASSERemoveEvent['data'];
                 setVehicleData((prevData) => {
@@ -76,12 +84,14 @@ function MBTAStreamLayer() {
                   return { ...prevData, features: newFeatures };
                 });
                 break;
+              }
               default:
                 console.warn('Main thread: Unknown MBTA event type from worker:', eventType);
                 break;
             }
             break;
-          case 'error':
+          }
+          case 'error': {
             console.error('Main thread: Caught error from worker:', message);
             toast.error("Got an error message. If icons aren't showing, refresh the page", {
               description: new Date().toLocaleDateString(
@@ -98,7 +108,8 @@ function MBTAStreamLayer() {
               )
             });
             break;
-          default:
+          }
+          default: {
             console.warn('Main thread: Unknown message type from worker:', type);
             toast.warning('Received an unknown message from the MBTA', {
               description: new Date().toLocaleDateString(
@@ -115,6 +126,7 @@ function MBTAStreamLayer() {
               )
             });
             break;
+          }
         }
       };
 
