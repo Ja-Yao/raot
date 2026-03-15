@@ -1,4 +1,4 @@
-import type { Stop } from 'types';
+import type { Stop } from './types';
 import { MBTA_KEY } from './common';
 
 /**

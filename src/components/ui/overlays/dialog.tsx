@@ -69,6 +69,7 @@ const DialogDescription = ({ className, ref, ...props }: DialogDescriptionProps)
   />
 );
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DialogBodyProps extends React.ComponentProps<'div'> {}
 const DialogBody = ({ className, ...props }: DialogBodyProps) => (
   <div
@@ -82,6 +83,7 @@ const DialogBody = ({ className, ...props }: DialogBodyProps) => (
   />
 );
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DialogFooterProps extends React.ComponentProps<'div'> {}
 const DialogFooter = ({ className, ...props }: DialogFooterProps) => {
   return (
@@ -139,4 +141,3 @@ export type {
   DialogHeaderProps,
   DialogTitleProps
 };
-

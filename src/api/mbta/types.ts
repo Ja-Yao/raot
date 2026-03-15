@@ -114,7 +114,7 @@ export type RoutePattern = {
     direction_id: number;
     name: string;
     sort_order: number;
-    time_desc: any;
+    time_desc: string;
     typicality: number;
   };
   id: string;
@@ -218,7 +218,17 @@ export interface MBTAData {
   id: string;
   type: string;
   attributes: {
-    [key: string]: any;
+    [key: string]: {
+      bearing: number;
+      current_status: string;
+      current_stop_sequence: number;
+      direction_id: number;
+      label: string;
+      latitude: number;
+      longitude: number;
+      speed: number;
+      updated_at: string;
+    };
   };
   relationships?: {
     [key: string]: {
@@ -283,7 +293,9 @@ export interface AlertResponse {
           };
         };
       };
-      links: {};
+      links: {
+        [x: string]: string;
+      };
       id: string;
       attributes: {
         url: string;
@@ -328,12 +340,12 @@ export interface AlertResponse {
 export interface MBTASSEEventPayload {
   // This is what the worker will send
   eventType: 'reset' | 'add' | 'update' | 'remove';
-  data: MBTAData | MBTAData[] | { id: string; type: string };
+  data: MBTASSEEventData | MBTASSEEventData[] | { id: string; type: string };
 }
 
 export interface WorkerMessageFromWorker {
   type: 'status' | 'data' | 'error';
-  payload: string | MBTASSEEventPayload | any; // Payload can vary based on type
+  payload: string | MBTASSEEventPayload; // Payload can vary based on type
 }
 
 export type MBTASSEEventData = {
@@ -391,6 +403,7 @@ export interface MBTAWorkerAPI {
   stopStreaming: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const StreamStatuses = {
   idle: 'idle',
   connecting: 'connecting',

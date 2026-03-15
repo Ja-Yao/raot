@@ -43,7 +43,7 @@ const SheetContent = ({
   role = 'dialog',
   closeButton = true,
   isFloat = true,
-  overlay,
+  overlay, // eslint-disable-line @typescript-eslint/no-unused-vars
   children,
   ...props
 }: SheetContentProps) => {
@@ -100,4 +100,3 @@ export {
   SheetTrigger
 };
 export type { SheetContentProps };
-

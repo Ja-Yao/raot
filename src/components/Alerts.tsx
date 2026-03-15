@@ -5,7 +5,6 @@ import { use, useEffect, useRef, useState } from 'react';
 
 import { twJoin } from 'tailwind-merge';
 import { Button } from './ui/buttons/button';
-import { ListBox, ListBoxItem } from './ui/collections/list-box';
 import { ScrollArea } from './ui/controls/scroll-area';
 import { Container } from './ui/layouts/container';
 import {
@@ -23,21 +22,20 @@ import {
   DrawerHeader,
   DrawerTrigger
 } from './ui/overlays/drawer';
-import { PopoverBody, PopoverContent, PopoverDescription, PopoverHeader, PopoverTitle } from './ui/overlays/popover';
+import { PopoverBody, PopoverContent, PopoverDescription, PopoverFooter, PopoverHeader, PopoverTitle } from './ui/overlays/popover';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/overlays/sheet';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/overlays/tooltip';
+import { Badge } from './ui/statuses/badge';
 import { Note } from './ui/statuses/note';
 import { Text } from './ui/surfaces/text';
-import { Badge } from './ui/statuses/badge';
 
 const alertsPromise = (async () => {
   const alerts = await getMBTAAlerts('5,6,7,8,9,10');
   return alerts;
 })();
 
-//FIXME: fix scrolling on accordions; scrolls full dialog content and not accordion content
 function Alerts() {
-  const alerts = use(alertsPromise);
+  const alerts = use(alertsPromise).data.sort((a, b) => b.attributes.severity - a.attributes.severity);
   const [isMobile, setIsMobile] = useState(false);
   const [open, setOpen] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -51,10 +49,10 @@ function Alerts() {
     } else {
       setIsMobile(false);
     }
-  });
+  }, []);
 
   useEffect(() => {
-    setAlertCount(alerts.data.length);
+    setAlertCount(alerts.length);
   }, [alerts]);
 
   return (
@@ -86,7 +84,7 @@ function Alerts() {
                   </AccordionTrigger>
                   <AccordionContent>
                     <ScrollArea orientation='vertical' className='w-full h-72 pr-3'>
-                      {alerts.data.map((alert, index) => (
+                      {alerts.map((alert, index) => (
                         <Note
                           key={index}
                           intent={`${alert.attributes.severity <= 7 ? 'warning' : 'danger'}`}
@@ -114,7 +112,7 @@ function Alerts() {
             >
               <IconBellAlarm className='h-[1.2rem] w-[1.2rem] scale-100' />
             </Button>
-            {alerts.data.length > 0 ? (
+            {alerts.length > 0 ? (
               <Badge
                 isCircle
                 intent='danger'
@@ -131,15 +129,43 @@ function Alerts() {
             isOpen={isPopoverOpen}
             onOpenChange={setIsPopoverOpen}
             arrow
-            className='width-full min-w-96'
+            className='width-full lg:min-w-lg md:min-w-sm'
           >
             <PopoverHeader>
               <div className='flex justify-between'>
                 <PopoverTitle>Alerts</PopoverTitle>
               </div>
-              <PopoverDescription>Some Description</PopoverDescription>
+              <PopoverDescription>Warnings and information about the network</PopoverDescription>
             </PopoverHeader>
-            <PopoverBody></PopoverBody>
+            <PopoverBody className='md:max-h-128 lg:max-h-196'>
+              {!alerts.length ? (
+                <Text>No alerts</Text>
+              ) : (
+                <ScrollArea orientation='vertical'>
+                  {alerts.slice(0, 5).map((alert) => (
+                    <Note
+                      key={crypto.randomUUID()}
+                      intent={
+                        alert.attributes.severity < 7 ? 'info' : alert.attributes.severity < 9 ? 'warning' : 'danger'
+                      }
+                      className='mb-2'
+                    >
+                      {alert.attributes.header}
+                    </Note>
+                  ))}
+                </ScrollArea>
+              )}
+            </PopoverBody>
+            <PopoverFooter>
+              <Button
+                onClick={() => {
+                  setIsPopoverOpen(false);
+                  setOpen(true);
+                }}
+              >
+                View all ({alerts.length})
+              </Button>
+            </PopoverFooter>
           </PopoverContent>
           <Sheet isOpen={open} onOpenChange={setOpen}>
             <SheetContent className='lg:max-w-lg'>
@@ -155,29 +181,22 @@ function Alerts() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <ScrollArea orientation='vertical' className='w-full h-160 lg:max-h-224 '>
-                      <ListBox
-                        aria-label='Transit alerts'
-                        items={alerts.data.sort((a, b) => b.attributes.severity - a.attributes.severity)}
-                        selectionMode='none'
-                      >
-                        {(item) => (
-                          <ListBoxItem>
-                            <Note
-                              intent={
-                                item.attributes.severity < 7
-                                  ? 'info'
-                                  : item.attributes.severity < 9
-                                    ? 'warning'
-                                    : 'danger'
-                              }
-                              className='mb-2'
-                            >
-                              {item.attributes.header}
-                            </Note>
-                          </ListBoxItem>
-                        )}
-                      </ListBox>
+                    <ScrollArea orientation='vertical' className='*:max-h-196'>
+                      {alerts.map((alert) => (
+                        <Note
+                          key={crypto.randomUUID()}
+                          intent={
+                            alert.attributes.severity < 7
+                              ? 'info'
+                              : alert.attributes.severity < 9
+                                ? 'warning'
+                                : 'danger'
+                          }
+                          className='mb-2'
+                        >
+                          {alert.attributes.header}
+                        </Note>
+                      ))}
                     </ScrollArea>
                   </AccordionContent>
                 </AccordionItem>
